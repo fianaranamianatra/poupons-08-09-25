@@ -1,0 +1,293 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Règles générales - Lecture libre, écriture authentifiée
+    match /{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Règles spécifiques pour les élèves
+    match /students/{studentId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateStudent(request.resource.data);
+      allow update: if request.auth != null && validateStudent(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les enseignants
+    match /teachers/{teacherId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateTeacher(request.resource.data);
+      allow update: if request.auth != null && validateTeacher(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les classes
+    match /classes/{classId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateClass(request.resource.data);
+      allow update: if request.auth != null && validateClass(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les matières
+    match /subjects/{subjectId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateSubject(request.resource.data);
+      allow update: if request.auth != null && validateSubject(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les notes
+    match /grades/{gradeId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateGrade(request.resource.data);
+      allow update: if request.auth != null && validateGrade(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les paiements (écolage)
+    match /fees/{feeId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateFee(request.resource.data);
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour l'emploi du temps
+    match /schedules/{scheduleId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateSchedule(request.resource.data);
+      allow update: if request.auth != null && validateSchedule(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les finances
+    match /finances/{financeId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour la hiérarchie
+    match /hierarchy/{employeeId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les communications
+    match /communications/{messageId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les rapports
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les finances avancées
+    match /advanced_finances/{financeId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les profils utilisateurs
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Règles pour les salaires
+    match /salaries/{salaryId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateSalary(request.resource.data);
+      allow update: if request.auth != null && validateSalary(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les transactions financières
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateTransaction(request.resource.data);
+      allow update: if request.auth != null && validateTransaction(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les paramètres d'intégration financière
+    match /financial_settings/{settingId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les logs d'intégration
+    match /integration_logs/{logId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les montants d'écolage par classe
+    match /class_ecolage_amounts/{amountId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateClassEcolageAmount(request.resource.data);
+      allow update: if request.auth != null && validateClassEcolageAmount(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Règles pour les paramètres d'écolage
+    match /ecolage_settings/{settingId} {
+      allow read: if true;
+      allow create: if request.auth != null && validateEcolageSettings(request.resource.data);
+      allow update: if request.auth != null && validateEcolageSettings(request.resource.data);
+      allow delete: if request.auth != null;
+    }
+    
+    // Fonctions de validation
+    function validateStudent(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'dateOfBirth', 'class', 'address', 'phone', 'parentName', 'status'])
+        && data.firstName is string && data.firstName.size() >= 2 && data.firstName.size() <= 50
+        && data.lastName is string && data.lastName.size() >= 2 && data.lastName.size() <= 50
+        && data.class is string && data.class.size() >= 1
+        && data.address is string && data.address.size() >= 10 && data.address.size() <= 200
+        && data.phone is string
+        && data.parentName is string && data.parentName.size() >= 2 && data.parentName.size() <= 100
+        && data.status in ['active', 'inactive'];
+    }
+    
+    function validateTeacher(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'email', 'phone', 'subject', 'experience', 'status'])
+        && data.firstName is string && data.firstName.size() >= 2 && data.firstName.size() <= 50
+        && data.lastName is string && data.lastName.size() >= 2 && data.lastName.size() <= 50
+        && data.email is string && data.email.matches('.*@.*\\..*')
+        && data.phone is string
+        && data.subject is string && data.subject.size() >= 2
+        && data.experience is number && data.experience >= 0 && data.experience <= 50
+        && data.status in ['active', 'inactive'];
+    }
+    
+    function validateClass(data) {
+      return data.keys().hasAll(['name', 'level', 'teacher', 'maxCapacity', 'room', 'status'])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 20
+        && data.level is string && data.level.size() >= 2
+        && data.teacher is string && data.teacher.size() >= 2
+        && data.maxCapacity is number && data.maxCapacity >= 5 && data.maxCapacity <= 35
+        && data.room is string && data.room.size() >= 2 && data.room.size() <= 50
+        && data.status in ['active', 'inactive'];
+    }
+    
+    function validateSubject(data) {
+      return data.keys().hasAll(['name', 'code', 'hoursPerWeek', 'status'])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 50
+        && data.code is string && data.code.size() >= 2 && data.code.size() <= 10
+        && data.hoursPerWeek is number && data.hoursPerWeek >= 1 && data.hoursPerWeek <= 10
+        && data.status in ['active', 'inactive'];
+    }
+    
+    function validateGrade(data) {
+      return data.keys().hasAll(['studentName', 'subject', 'assignment', 'grade', 'maxGrade', 'teacher', 'type'])
+        && data.studentName is string && data.studentName.size() >= 2
+        && data.subject is string && data.subject.size() >= 2
+        && data.assignment is string && data.assignment.size() >= 2 && data.assignment.size() <= 100
+        && data.grade is number && data.grade >= 0
+        && data.maxGrade is number && data.maxGrade > 0 && data.maxGrade <= 100
+        && data.grade <= data.maxGrade
+        && data.teacher is string && data.teacher.size() >= 2
+        && data.type in ['exam', 'homework', 'quiz', 'project'];
+    }
+    
+    function validateFee(data) {
+      return data.keys().hasAll(['studentName', 'class', 'amount', 'paymentMethod', 'period', 'reference'])
+        && data.studentName is string && data.studentName.size() >= 2
+        && data.class is string && data.class.size() >= 1
+        && data.amount is number && data.amount >= 1000 && data.amount <= 10000000
+        && data.paymentMethod is string
+        && data.period is string
+        && data.reference is string && data.reference.size() >= 3 && data.reference.size() <= 50;
+    }
+    
+    function validateSchedule(data) {
+      return data.keys().hasAll(['class', 'subject', 'teacher', 'day', 'startTime', 'endTime'])
+        && data.class is string && data.class.size() >= 1
+        && data.subject is string && data.subject.size() >= 2
+        && data.teacher is string && data.teacher.size() >= 2
+        && data.day is string
+        && data.startTime is string
+        && data.endTime is string;
+    }
+    
+    function validateSalary(data) {
+      return data.keys().hasAll(['employeeName', 'position', 'department', 'baseSalary', 'effectiveDate', 'status'])
+        && data.employeeName is string && data.employeeName.size() >= 2 && data.employeeName.size() <= 100
+        && data.position is string && data.position.size() >= 2 && data.position.size() <= 100
+        && data.department is string && data.department.size() >= 2 && data.department.size() <= 50
+        && data.baseSalary is number && data.baseSalary >= 100000 && data.baseSalary <= 10000000
+        && data.effectiveDate is string
+        && data.status in ['active', 'inactive', 'pending'];
+    }
+    
+    function validateTransaction(data) {
+      return data.keys().hasAll(['type', 'category', 'description', 'amount', 'date', 'paymentMethod', 'status'])
+        && data.type in ['Encaissement', 'Décaissement']
+        && data.category is string && data.category.size() >= 2 && data.category.size() <= 50
+        && data.description is string && data.description.size() >= 5 && data.description.size() <= 200
+        && data.amount is number && data.amount > 0 && data.amount <= 100000000
+        && data.date is string
+        && data.paymentMethod is string && data.paymentMethod.size() >= 2
+        && data.status in ['Validé', 'En attente', 'Annulé']
+        && (!data.keys().hasAny(['isManual']) || data.isManual is bool);
+    }
+    
+    // Validation pour les paramètres financiers
+    function validateFinancialSetting(data) {
+      return data.keys().hasAll(['cnaps', 'ostie', 'irsa'])
+        && data.cnaps.keys().hasAll(['employeeRate', 'employerRate', 'ceiling', 'isActive'])
+        && data.ostie.keys().hasAll(['employeeRate', 'employerRate', 'ceiling', 'isActive'])
+        && data.cnaps.employeeRate is number && data.cnaps.employeeRate >= 0 && data.cnaps.employeeRate <= 20
+        && data.cnaps.employerRate is number && data.cnaps.employerRate >= 0 && data.cnaps.employerRate <= 20
+        && data.ostie.employeeRate is number && data.ostie.employeeRate >= 0 && data.ostie.employeeRate <= 20
+        && data.ostie.employerRate is number && data.ostie.employerRate >= 0 && data.ostie.employerRate <= 20;
+    }
+    
+    // Validation pour les montants d'écolage par classe
+    function validateClassEcolageAmount(data) {
+      return data.keys().hasAll(['className', 'level', 'monthlyAmount', 'annualAmount', 'isActive', 'effectiveDate'])
+        && data.className is string && data.className.size() >= 1 && data.className.size() <= 50
+        && data.level is string && data.level.size() >= 2 && data.level.size() <= 100
+        && data.monthlyAmount is number && data.monthlyAmount >= 50000 && data.monthlyAmount <= 1000000
+        && data.annualAmount is number && data.annualAmount >= 500000 && data.annualAmount <= 10000000
+        && data.isActive is bool
+        && data.effectiveDate is string
+        && (!data.keys().hasAny(['registrationFee']) || (data.registrationFee is number && data.registrationFee >= 0 && data.registrationFee <= 500000))
+        && (!data.keys().hasAny(['examFee']) || (data.examFee is number && data.examFee >= 0 && data.examFee <= 200000));
+    }
+    
+    // Validation pour les paramètres d'écolage
+    function validateEcolageSettings(data) {
+      return data.keys().hasAll(['defaultMonthlyAmount', 'defaultRegistrationFee', 'defaultExamFee', 'academicYear', 'paymentSchedule', 'isActive'])
+        && data.defaultMonthlyAmount is number && data.defaultMonthlyAmount >= 50000 && data.defaultMonthlyAmount <= 1000000
+        && data.defaultRegistrationFee is number && data.defaultRegistrationFee >= 0 && data.defaultRegistrationFee <= 500000
+        && data.defaultExamFee is number && data.defaultExamFee >= 0 && data.defaultExamFee <= 200000
+        && data.academicYear is string && data.academicYear.size() >= 7 && data.academicYear.size() <= 15
+        && data.paymentSchedule.keys().hasAll(['startMonth', 'endMonth', 'totalMonths'])
+        && data.paymentSchedule.startMonth is number && data.paymentSchedule.startMonth >= 1 && data.paymentSchedule.startMonth <= 12
+        && data.paymentSchedule.endMonth is number && data.paymentSchedule.endMonth >= 1 && data.paymentSchedule.endMonth <= 12
+        && data.paymentSchedule.totalMonths is number && data.paymentSchedule.totalMonths >= 8 && data.paymentSchedule.totalMonths <= 12
+        && data.isActive is bool;
+    }
+  }
+}
