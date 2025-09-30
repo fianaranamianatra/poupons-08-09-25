@@ -171,3 +171,21 @@ export interface Transaction {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface User {
+  id?: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'admin' | 'director' | 'secretary' | 'teacher' | 'parent' | 'accountant';
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  hireDate?: string;
+  isActive: boolean;
+  permissions?: string[];
+  lastLogin?: Date;
+  photoURL?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

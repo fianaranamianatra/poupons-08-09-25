@@ -233,4 +233,6 @@ export const financialSettingsService = new FirebaseService('financial_settings'
 // Service pour les logs d'intégration
 export const integrationLogsService = new FirebaseService('integration_logs');
 
+export const usersService = new FirebaseService('users');
+
 export default FirebaseService;
