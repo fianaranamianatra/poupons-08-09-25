@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, ShieldCheck } from 'lucide-react';
+import { User, Mail, ShieldCheck, Lock } from 'lucide-react';
 import { USER_ROLES, getRoleDisplayName } from '../../lib/roles';
 
 interface UserFormProps {
@@ -13,7 +13,9 @@ export function UserForm({ onSubmit, onCancel, initialData }: UserFormProps) {
     firstName: initialData?.firstName || '',
     lastName: initialData?.lastName || '',
     email: initialData?.email || '',
-    role: initialData?.role || USER_ROLES.PARENT,
+    password: '',
+    confirmPassword: '',
+    role: initialData?.role || USER_ROLES.SECRETARY,
     isActive: initialData?.isActive !== undefined ? initialData.isActive : true
   });
 
@@ -29,6 +31,15 @@ export function UserForm({ onSubmit, onCancel, initialData }: UserFormProps) {
     if (!formData.lastName.trim()) newErrors.lastName = 'Le nom est requis';
     if (!formData.email.trim()) newErrors.email = 'L\'email est requis';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Un email valide est requis';
+
+    // Validation du mot de passe pour les nouveaux utilisateurs
+    if (!initialData) {
+      if (!formData.password) newErrors.password = 'Le mot de passe est requis';
+      else if (formData.password.length < 8) newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
+
+      if (!formData.confirmPassword) newErrors.confirmPassword = 'La confirmation du mot de passe est requise';
+      else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+    }
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -133,6 +144,50 @@ export function UserForm({ onSubmit, onCancel, initialData }: UserFormProps) {
           )}
         </div>
 
+        {!initialData && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Lock className="w-4 h-4 inline mr-2" />
+                Mot de passe *
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.password ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Entrez le mot de passe"
+              />
+              {errors.password && (
+                <p className="text-red-600 text-xs mt-1">{errors.password}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Lock className="w-4 h-4 inline mr-2" />
+                Confirmer le mot de passe *
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Confirmez le mot de passe"
+              />
+              {errors.confirmPassword && (
+                <p className="text-red-600 text-xs mt-1">{errors.confirmPassword}</p>
+              )}
+            </div>
+          </>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <ShieldCheck className="w-4 h-4 inline mr-2" />
@@ -165,13 +220,6 @@ export function UserForm({ onSubmit, onCancel, initialData }: UserFormProps) {
         </div>
       </div>
 
-      {!initialData && (
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-700">
-            <strong>Note:</strong> Un mot de passe temporaire sera généré et envoyé à l'email de l'utilisateur.
-          </p>
-        </div>
-      )}
 
       <div className="flex space-x-3 pt-4">
         <button

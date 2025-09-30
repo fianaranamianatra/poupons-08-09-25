@@ -115,11 +115,11 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
         case 'reports':
           return can('all_reports') || can('view_all_reports');
         case 'hr':
-          return is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]);
+          return is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
         case 'users':
-          return is([USER_ROLES.ADMIN]);
+          return is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
         case 'import':
-          return is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]);
+          return is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
         default:
           return true; // Dashboard is always visible
       }
@@ -130,7 +130,7 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
   const hasFinancialAccess = () => {
     return can('manage_fees') || can('view_all_fees') || can('view_child_fees') ||
            can('manage_finances') || can('view_finances') ||
-           is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
+           is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
   };
   
   // Filter financial menu items based on permissions
@@ -140,10 +140,10 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
         case 'ecolage':
           return can('manage_fees') || can('view_all_fees') || can('view_child_fees');
         case 'financial-transactions':
-          return can('manage_finances') || can('view_finances') || is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
+          return can('manage_finances') || can('view_finances') || is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
         case 'salary-management':
         case 'payroll':
-          return can('manage_finances') || can('view_finances') || is([USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]);
+          return can('manage_finances') || can('view_finances') || is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
         default:
           return true;
       }
