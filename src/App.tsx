@@ -116,73 +116,73 @@ function App() {
         return <Dashboard />;
       case 'students':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY, USER_ROLES.TEACHER]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY]}>
             <StudentsFirebase />
           </RoleBasedRoute>
         );
       case 'teachers':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
             <TeachersFirebase />
           </RoleBasedRoute>
         );
       case 'classes':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY]}>
             <ClassesFirebase />
           </RoleBasedRoute>
         );
       case 'subjects':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
             <SubjectsFirebase />
           </RoleBasedRoute>
         );
       case 'ecolage':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY, USER_ROLES.ACCOUNTANT]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY]}>
             <EcolageFirebase />
           </RoleBasedRoute>
         );
       case 'payroll':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
             <PayrollManagement />
           </RoleBasedRoute>
         );
       case 'salary-management':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
             <SalaryManagement />
           </RoleBasedRoute>
         );
       case 'financial-transactions':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.ACCOUNTANT]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
             <FinancialTransactions />
           </RoleBasedRoute>
         );
       case 'reports':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR, USER_ROLES.TEACHER]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
             <ReportsFirebase />
           </RoleBasedRoute>
         );
       case 'hr':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
             <HumanResources />
           </RoleBasedRoute>
         );
       case 'users':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
             <UserManagement />
           </RoleBasedRoute>
         );
       case 'import':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.ADMIN, USER_ROLES.DIRECTOR]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
             <div className="space-y-6">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Import de Données</h1>

@@ -44,15 +44,27 @@ export default function UserManagement() {
   const handleSubmit = async (data: any) => {
     try {
       if (selectedUser?.id) {
-        await usersService.update(selectedUser.id, data);
+        // Mise à jour d'un utilisateur existant
+        const { password, confirmPassword, ...updateData } = data;
+        await usersService.update(selectedUser.id, updateData);
       } else {
-        await usersService.create(data);
+        // Création d'un nouvel utilisateur avec Firebase Auth
+        const { signUp } = await import('../lib/auth');
+        const { password, confirmPassword, ...userData } = data;
+
+        await signUp(
+          userData.email,
+          password,
+          userData.firstName,
+          userData.lastName,
+          userData.role
+        );
       }
       setShowModal(false);
       refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de la sauvegarde:', error);
-      throw error;
+      throw new Error(error.message || 'Erreur lors de la création de l\'utilisateur');
     }
   };
 

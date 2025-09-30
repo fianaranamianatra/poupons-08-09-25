@@ -1,62 +1,47 @@
 // Enumeration of user roles
 export const USER_ROLES = {
-  ADMIN: 'admin',
+  PDG: 'pdg',
   DIRECTOR: 'director',
-  SECRETARY: 'secretary',
-  TEACHER: 'teacher',
-  PARENT: 'parent',
-  ACCOUNTANT: 'accountant'
+  SECRETARY: 'secretary'
 };
 
 // Define permissions for each role
 export const PERMISSIONS = {
-  // Administrator - FULL ACCESS
-  [USER_ROLES.ADMIN]: [
+  // PDG - FULL ACCESS
+  [USER_ROLES.PDG]: [
     'manage_users', 'system_config', 'all_reports', 'all_data_access',
     'manage_students', 'manage_teachers', 'manage_classes', 'manage_subjects',
     'manage_grades', 'manage_fees', 'manage_schedules', 'manage_finances',
-    'manage_hierarchy', 'manage_communications'
+    'manage_hierarchy', 'manage_communications', 'manage_staff', 'approve_actions',
+    'manage_salaries', 'generate_financial_reports', 'view_accounting_data',
+    'manage_enrollments', 'generate_certificates', 'manage_attendance'
   ],
-  
+
   // Director - GENERAL SUPERVISION
   [USER_ROLES.DIRECTOR]: [
-    'view_all_reports', 'approve_actions', 'view_finances', 'manage_staff',
+    'manage_users', 'view_all_reports', 'approve_actions', 'view_finances', 'manage_staff',
     'view_students', 'view_teachers', 'view_classes', 'view_schedules',
-    'view_hierarchy', 'manage_communications'
+    'view_hierarchy', 'manage_communications', 'manage_students', 'manage_teachers',
+    'manage_classes', 'manage_subjects', 'manage_grades', 'manage_fees',
+    'manage_schedules', 'manage_finances', 'generate_financial_reports',
+    'manage_enrollments', 'generate_certificates', 'manage_attendance'
   ],
-  
+
   // Secretary - ADMINISTRATIVE MANAGEMENT
   [USER_ROLES.SECRETARY]: [
-    'manage_students', 'manage_fees', 'generate_certificates', 
-    'manage_communications', 'view_schedules', 'manage_enrollments'
-  ],
-  
-  // Teachers - PEDAGOGY
-  [USER_ROLES.TEACHER]: [
-    'manage_grades', 'view_schedules', 'view_students', 
-    'manage_attendance', 'teacher_communications'
-  ],
-  
-  // Parents/Guardians - CONSULTATION
-  [USER_ROLES.PARENT]: [
-    'view_child_grades', 'view_child_fees', 'view_child_schedule',
-    'parent_communications', 'view_child_attendance'
-  ],
-  
-  // Accountant - FINANCES
-  [USER_ROLES.ACCOUNTANT]: [
-    'manage_finances', 'view_all_fees', 'manage_salaries', 
-    'generate_financial_reports', 'view_accounting_data'
+    'manage_students', 'manage_fees', 'generate_certificates',
+    'manage_communications', 'view_schedules', 'manage_enrollments',
+    'view_students', 'view_classes', 'view_teachers', 'manage_attendance'
   ]
 };
 
 // Function to check if a user has a specific permission
 export const hasPermission = (userRole: string, permission: string): boolean => {
   if (!userRole || !permission) return false;
-  
-  // Admin has all permissions
-  if (userRole === USER_ROLES.ADMIN) return true;
-  
+
+  // PDG has all permissions
+  if (userRole === USER_ROLES.PDG) return true;
+
   // Check if the user's role has the specific permission
   return PERMISSIONS[userRole]?.includes(permission) || false;
 };
@@ -80,18 +65,12 @@ export const getAllRoles = (): string[] => {
 // Get role display name
 export const getRoleDisplayName = (role: string): string => {
   switch (role) {
-    case USER_ROLES.ADMIN:
-      return 'Administrateur';
+    case USER_ROLES.PDG:
+      return 'PDG';
     case USER_ROLES.DIRECTOR:
-      return 'Directeur';
+      return 'Directeur / Directrice';
     case USER_ROLES.SECRETARY:
       return 'Secrétaire';
-    case USER_ROLES.TEACHER:
-      return 'Enseignant';
-    case USER_ROLES.PARENT:
-      return 'Parent';
-    case USER_ROLES.ACCOUNTANT:
-      return 'Comptable';
     default:
       return 'Utilisateur';
   }
