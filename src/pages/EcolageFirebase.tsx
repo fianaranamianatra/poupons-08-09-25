@@ -12,6 +12,8 @@ import { feesService, studentsService, classesService } from '../lib/firebase/fi
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 import { CentralizedSyncIndicator } from '../components/financial/CentralizedSyncIndicator';
 import { ClassAmountIndicator } from '../components/ecolage/ClassAmountIndicator';
+import { usePermissions } from '../hooks/usePermissions';
+import { USER_ROLES } from '../lib/roles';
 
 interface Payment {
   id?: string;
@@ -48,6 +50,8 @@ const paymentMethodLabels = {
 };
 
 export function EcolageFirebase() {
+  const { is } = usePermissions();
+  const isSecretary = is([USER_ROLES.SECRETARY]);
   const [searchTerm, setSearchTerm] = useState('');
   const [students, setStudents] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
@@ -504,15 +508,15 @@ export function EcolageFirebase() {
                     </td>
                     <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
                       <div className={`flex items-center ${isMobile ? 'space-x-1' : 'space-x-2'}`}>
-                        <button 
+                        <button
                           onClick={() => handleViewPayment(payment)}
                           className={`${isMobile ? 'p-2' : 'p-1.5'} text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors`}
                         >
                           <Eye className={`${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
                         </button>
-                        {!isMobile && (
+                        {!isMobile && !isSecretary && (
                           <>
-                            <button 
+                            <button
                               onClick={() => handleEditClick(payment)}
                               disabled={updating}
                               className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
@@ -520,7 +524,7 @@ export function EcolageFirebase() {
                             >
                               <Edit className="w-4 h-4" />
                             </button>
-                            <button 
+                            <button
                               onClick={() => payment.id && handleDeletePayment(payment.id)}
                               disabled={deleting}
                               className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, Filter, Edit, Trash2, Eye, Users, Calendar, MapPin, Phone, FileText, CheckSquare, Square, AlertTriangle, DollarSign } from 'lucide-react';
+import { Search, Plus, Filter, CreditCard as Edit, Trash2, Eye, Users, Calendar, MapPin, Phone, FileText, CheckSquare, Square, AlertTriangle, DollarSign } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { StudentFormFirebase } from '../components/forms/StudentFormFirebase';
 import { CertificateModal } from '../components/certificates/CertificateModal';
@@ -10,6 +10,8 @@ import { Avatar } from '../components/Avatar';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { studentsService } from '../lib/firebase/firebaseService';
 import { logout } from '../lib/auth';
+import { usePermissions } from '../hooks/usePermissions';
+import { USER_ROLES } from '../lib/roles';
 
 interface Student {
   id?: string;
@@ -27,6 +29,8 @@ interface Student {
 }
 
 export function StudentsFirebase() {
+  const { is } = usePermissions();
+  const isSecretary = is([USER_ROLES.SECRETARY]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -337,15 +341,17 @@ export function StudentsFirebase() {
               {selectedStudents.length} élève(s) sélectionné(s)
             </span>
           </div>
-          
-          <button
-            onClick={handleDeleteSelected}
-            disabled={selectedStudents.length === 0}
-            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-2.5 text-sm w-full' : 'px-3 py-1.5'} bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            <Trash2 className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
-            Supprimer la sélection
-          </button>
+
+          {!isSecretary && (
+            <button
+              onClick={handleDeleteSelected}
+              disabled={selectedStudents.length === 0}
+              className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-2.5 text-sm w-full' : 'px-3 py-1.5'} bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <Trash2 className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
+              Supprimer la sélection
+            </button>
+          )}
         </div>
       )}
 
@@ -458,32 +464,36 @@ export function StudentsFirebase() {
                     </td>
                     <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
                       <div className={`flex items-center ${isMobile ? 'space-x-1' : 'space-x-2'}`}>
-                        <button 
+                        <button
                           onClick={() => handleViewStudent(student)}
                           className={`${isMobile ? 'p-2' : 'p-1.5'} text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors`}
                           title="Voir les détails"
                         >
                           <Eye className={`${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
                         </button>
-                        <button 
-                          onClick={() => handleEditClick(student)}
-                          disabled={updating}
-                          className={`${isMobile ? 'p-2' : 'p-1.5'} text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50`}
-                          title="Modifier"
-                        >
-                          <Edit className={`${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
-                        </button>
+                        {!isSecretary && (
+                          <button
+                            onClick={() => handleEditClick(student)}
+                            disabled={updating}
+                            className={`${isMobile ? 'p-2' : 'p-1.5'} text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50`}
+                            title="Modifier"
+                          >
+                            <Edit className={`${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
+                          </button>
+                        )}
                         {!isMobile && (
                           <>
-                            <button 
-                              onClick={() => student.id && handleDeleteStudent(student.id)}
-                              disabled={deleting}
-                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Supprimer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                            <button 
+                            {!isSecretary && (
+                              <button
+                                onClick={() => student.id && handleDeleteStudent(student.id)}
+                                disabled={deleting}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
                               onClick={() => handleGenerateCertificate(student)}
                               className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                               title="Certificat de scolarité"

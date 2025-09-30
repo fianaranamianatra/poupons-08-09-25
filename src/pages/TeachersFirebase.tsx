@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Plus, Filter, Edit, Trash2, Eye, GraduationCap, Mail, Phone, BookOpen } from 'lucide-react';
+import { Search, Plus, Filter, CreditCard as Edit, Trash2, Eye, GraduationCap, Mail, Phone, BookOpen } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { TeacherFormFirebase } from '../components/forms/TeacherFormFirebase';
 import { Avatar } from '../components/Avatar';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { teachersService } from '../lib/firebase/firebaseService';
+import { usePermissions } from '../hooks/usePermissions';
+import { USER_ROLES } from '../lib/roles';
 
 interface Teacher {
   id?: string;
@@ -23,6 +25,8 @@ interface Teacher {
 }
 
 export function TeachersFirebase() {
+  const { is } = usePermissions();
+  const isSecretary = is([USER_ROLES.SECRETARY]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -399,26 +403,30 @@ export function TeachersFirebase() {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
-                        <button 
+                        <button
                           onClick={() => handleViewTeacher(teacher)}
                           className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button 
-                          onClick={() => handleEditClick(teacher)}
-                          disabled={updating}
-                          className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => teacher.id && handleDeleteTeacher(teacher.id)}
-                          disabled={deleting}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!isSecretary && (
+                          <>
+                            <button
+                              onClick={() => handleEditClick(teacher)}
+                              disabled={updating}
+                              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => teacher.id && handleDeleteTeacher(teacher.id)}
+                              disabled={deleting}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
