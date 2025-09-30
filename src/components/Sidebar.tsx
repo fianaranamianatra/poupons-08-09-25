@@ -1,11 +1,11 @@
 import React from 'react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  Home, 
-  Users, 
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import {
+  Home,
+  Users,
   GraduationCap,
-  BookOpen, 
+  BookOpen,
   FileText,
   Menu,
   X,
@@ -55,6 +55,8 @@ const financialMenuItems = [
 
 export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse }: SidebarProps) {
   const { can, is } = usePermissions();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [financialMenuOpen, setFinancialMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -92,8 +94,12 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
     }
   };
 
-  // Gérer la sélection d'une page sur mobile
+  // Gérer la sélection d'une page
   const handlePageChange = (page: Page) => {
+    // Si nous ne sommes pas sur la route principale, naviguer d'abord vers /
+    if (location.pathname !== '/') {
+      navigate('/');
+    }
     onPageChange(page);
     if (isMobile) {
       setMobileMenuOpen(false);
