@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { User, Calendar, MapPin, Phone, Mail } from 'lucide-react';
+import { User, Calendar, MapPin, Phone, Mail, GraduationCap } from 'lucide-react';
 import { useFirebaseCollection } from '../../hooks/useFirebaseCollection';
 import { classesService } from '../../lib/firebase/firebaseService';
 import { validateData, studentValidationSchema } from '../../lib/validation';
+import { CURRENT_SCHOOL_YEAR } from '../../lib/constants/schoolYears';
 
 interface StudentFormFirebaseProps {
   onSubmit: (data: any) => void;
@@ -34,7 +35,8 @@ export function StudentFormFirebase({ onSubmit, onCancel, initialData }: Student
     phone: initialData?.phone || '',
     parentName: initialData?.parentName || '',
     parentEmail: initialData?.parentEmail || '',
-    status: initialData?.status || 'active'
+    status: initialData?.status || 'active',
+    schoolYear: CURRENT_SCHOOL_YEAR
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -167,6 +169,26 @@ export function StudentFormFirebase({ onSubmit, onCancel, initialData }: Student
           </select>
           {errors.class && (
             <p className={`text-red-600 ${isMobile ? 'text-sm' : 'text-xs'} mt-1`}>{errors.class}</p>
+          )}
+        </div>
+
+        <div>
+          <label className={`block ${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-700 mb-2`}>
+            <GraduationCap className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} inline mr-2`} />
+            Année scolaire
+          </label>
+          <input
+            type="text"
+            name="schoolYear"
+            value={formData.schoolYear}
+            readOnly
+            className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed ${
+              errors.schoolYear ? 'border-red-300' : 'border-gray-300'
+            }`}
+            title="L'année scolaire est automatiquement définie"
+          />
+          {errors.schoolYear && (
+            <p className={`text-red-600 ${isMobile ? 'text-sm' : 'text-xs'} mt-1`}>{errors.schoolYear}</p>
           )}
         </div>
 
