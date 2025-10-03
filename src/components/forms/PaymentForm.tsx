@@ -358,14 +358,16 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
           />
           
           {/* Indicateur de montant configuré */}
-          <div className="mt-1">
-            <ClassAmountIndicator
-              className={payment.class}
-              level=""
-              currentAmount={payment.amount}
-              compact={true}
-            />
-          </div>
+          {formData.class && formData.amount && (
+            <div className="mt-1">
+              <ClassAmountIndicator
+                className={formData.class}
+                level=""
+                currentAmount={parseFloat(formData.amount) || 0}
+                compact={true}
+              />
+            </div>
+          )}
         </div>
       </div>
 
