@@ -147,7 +147,7 @@ export class PaymentTrackingService {
   /**
    * Générer un rapport de paiements pour une classe
    */
-  static async generateClassPaymentReport(className: string, academicYear: string = CURRENT_SCHOOL_YEAR): Promise<any[]> {
+  static async generateClassPaymentReport(className: string, academicYear: string = '2024-2025'): Promise<any[]> {
     try {
       const allStudents = await studentsService.getAll();
       const classStudents = allStudents.filter(s => s.class === className);
