@@ -122,7 +122,7 @@ function App() {
         );
       case 'teachers':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY]}>
             <TeachersFirebase />
           </RoleBasedRoute>
         );
@@ -134,7 +134,7 @@ function App() {
         );
       case 'subjects':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY]}>
             <SubjectsFirebase />
           </RoleBasedRoute>
         );
@@ -158,7 +158,7 @@ function App() {
         );
       case 'financial-transactions':
         return (
-          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR]}>
+          <RoleBasedRoute allowedRoles={[USER_ROLES.PDG, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY]}>
             <FinancialTransactions />
           </RoleBasedRoute>
         );
