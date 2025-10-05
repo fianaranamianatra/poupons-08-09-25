@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, GraduationCap, BookOpen, TrendingUp, Calendar, Award, MessageCircle, AlertTriangle, Plus, DollarSign, Zap, Activity, Calculator, Trash2, Settings } from 'lucide-react';
-// import { DataInitializer } from '../components/admin/DataInitializer';
 import { PaymentAlerts } from '../components/ecolage/PaymentAlerts';
 import { EcolageStudentSync } from '../components/ecolage/EcolageStudentSync';
 import { EcolageQuickSetup } from '../components/ecolage/EcolageQuickSetup';
@@ -9,45 +8,7 @@ import { Database } from 'lucide-react';
 import { PayrollSalarySyncPanel } from '../components/payroll/PayrollSalarySyncPanel';
 import { FinancialDataCleanup } from '../components/admin/FinancialDataCleanup';
 import { CentralizedSyncPanel } from '../components/financial/CentralizedSyncPanel';
-
-const stats = [
-  {
-    label: 'Total Élèves',
-    value: '0',
-    change: '0%',
-    icon: Users,
-    color: 'blue',
-    bgColor: 'bg-blue-50',
-    iconColor: 'text-blue-600'
-  },
-  {
-    label: 'Enseignants',
-    value: '0',
-    change: '0%',
-    icon: GraduationCap,
-    color: 'emerald',
-    bgColor: 'bg-emerald-50',
-    iconColor: 'text-emerald-600'
-  },
-  {
-    label: 'Classes Actives',
-    value: '0',
-    change: '0%',
-    icon: BookOpen,
-    color: 'orange',
-    bgColor: 'bg-orange-50',
-    iconColor: 'text-orange-600'
-  },
-  {
-    label: 'Taux de Réussite',
-    value: '0%',
-    change: '0%',
-    icon: TrendingUp,
-    color: 'green',
-    bgColor: 'bg-green-50',
-    iconColor: 'text-green-600'
-  }
-];
+import { studentsService, teachersService, classesService } from '../lib/firebase/firebaseService';
 
 const recentActivities: any[] = [];
 
@@ -55,15 +16,133 @@ const upcomingEvents: any[] = [];
 
 export function Dashboard() {
   const [isMobile, setIsMobile] = React.useState(false);
+  const [stats, setStats] = useState([
+    {
+      label: 'Total Élèves',
+      value: '0',
+      change: '0%',
+      icon: Users,
+      color: 'blue',
+      bgColor: 'bg-blue-50',
+      iconColor: 'text-blue-600'
+    },
+    {
+      label: 'Enseignants',
+      value: '0',
+      change: '0%',
+      icon: GraduationCap,
+      color: 'emerald',
+      bgColor: 'bg-emerald-50',
+      iconColor: 'text-emerald-600'
+    },
+    {
+      label: 'Classes Actives',
+      value: '0',
+      change: '0%',
+      icon: BookOpen,
+      color: 'orange',
+      bgColor: 'bg-orange-50',
+      iconColor: 'text-orange-600'
+    },
+    {
+      label: 'Taux de Réussite',
+      value: '0%',
+      change: '0%',
+      icon: TrendingUp,
+      color: 'green',
+      bgColor: 'bg-green-50',
+      iconColor: 'text-green-600'
+    }
+  ]);
+  const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    const loadAllStats = async () => {
+      try {
+        setLoading(true);
+        console.log('📊 Début du chargement des statistiques du tableau de bord');
+
+        const [studentsData, teachersData, classesData] = await Promise.all([
+          studentsService.getAll(),
+          teachersService.getAll(),
+          classesService.getAll()
+        ]);
+
+        const totalStudents = studentsData.length;
+        const totalTeachers = teachersData.length;
+        const totalClasses = classesData.length;
+
+        console.log('✅ Données récupérées:', {
+          totalStudents,
+          totalTeachers,
+          totalClasses
+        });
+
+        const activeStudents = studentsData.filter(
+          student => student.status === 'active'
+        ).length;
+
+        const successRate = totalStudents > 0
+          ? Math.round((activeStudents / totalStudents) * 100)
+          : 0;
+
+        setStats([
+          {
+            label: 'Total Élèves',
+            value: totalStudents.toString(),
+            change: '0%',
+            icon: Users,
+            color: 'blue',
+            bgColor: 'bg-blue-50',
+            iconColor: 'text-blue-600'
+          },
+          {
+            label: 'Enseignants',
+            value: totalTeachers.toString(),
+            change: '0%',
+            icon: GraduationCap,
+            color: 'emerald',
+            bgColor: 'bg-emerald-50',
+            iconColor: 'text-emerald-600'
+          },
+          {
+            label: 'Classes Actives',
+            value: totalClasses.toString(),
+            change: '0%',
+            icon: BookOpen,
+            color: 'orange',
+            bgColor: 'bg-orange-50',
+            iconColor: 'text-orange-600'
+          },
+          {
+            label: 'Taux de Réussite',
+            value: `${successRate}%`,
+            change: '0%',
+            icon: TrendingUp,
+            color: 'green',
+            bgColor: 'bg-green-50',
+            iconColor: 'text-green-600'
+          }
+        ]);
+
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement des statistiques:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAllStats();
   }, []);
 
   const handleQuickAction = (action: string) => {
@@ -93,6 +172,17 @@ export function Dashboard() {
         break;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement du tableau de bord...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
