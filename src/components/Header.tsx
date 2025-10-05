@@ -3,6 +3,8 @@ import { Search, Bell, User, Settings, LogOut, Wifi, WifiOff, Menu } from 'lucid
 import { Avatar } from './Avatar';
 import { logout } from '../lib/auth';
 import { OfflineHandler } from '../lib/firebase/offlineHandler';
+import { useAuth } from '../hooks/useAuth';
+import { getRoleDisplayName, getRoleBadgeColor } from '../lib/roles';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -10,6 +12,7 @@ interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar, isMobile = false }: HeaderProps) {
+  const { profile } = useAuth();
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const [isInternalMobile, setIsInternalMobile] = React.useState(false);
 
@@ -115,15 +118,26 @@ export function Header({ onToggleSidebar, isMobile = false }: HeaderProps) {
         
         {/* User Profile */}
         <div className={`${actualIsMobile ? 'hidden md:flex' : 'flex'} items-center space-x-3`}>
-          <Avatar 
-            firstName="Admin" 
-            lastName="LES POUPONS" 
+          <Avatar
+            firstName={profile?.firstName || 'Admin'}
+            lastName={profile?.lastName || 'User'}
             size={actualIsMobile ? "md" : "sm"}
             showPhoto={true}
           />
           <div className={`${actualIsMobile ? 'hidden lg:block' : 'hidden md:block'}`}>
-            <p className={`${actualIsMobile ? 'text-base' : 'text-sm'} font-medium text-gray-900`}>Admin LES POUPONS</p>
-            <p className={`${actualIsMobile ? 'text-sm' : 'text-xs'} text-gray-500`}>Administrateur</p>
+            <div className="flex items-center space-x-2">
+              <p className={`${actualIsMobile ? 'text-base' : 'text-sm'} font-medium text-gray-900`}>
+                {profile ? `${profile.firstName} ${profile.lastName}` : 'Admin User'}
+              </p>
+              {profile?.role && (
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(profile.role)}`}>
+                  {getRoleDisplayName(profile.role)}
+                </span>
+              )}
+            </div>
+            <p className={`${actualIsMobile ? 'text-sm' : 'text-xs'} text-gray-500`}>
+              {profile?.email || 'admin@example.com'}
+            </p>
           </div>
         </div>
       </div>

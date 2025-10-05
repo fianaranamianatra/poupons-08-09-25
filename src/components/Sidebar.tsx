@@ -134,9 +134,9 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
   
   // Check if user has access to financial features
   const hasFinancialAccess = () => {
-    return can('manage_fees') || can('view_all_fees') || can('view_child_fees') ||
+    return can('manage_fees') || can('view_fees') || can('view_all_fees') || can('view_child_fees') ||
            can('manage_finances') || can('view_finances') ||
-           is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
+           is([USER_ROLES.PDG, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY]);
   };
   
   // Filter financial menu items based on permissions
@@ -144,12 +144,13 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
     return financialMenuItems.filter(item => {
       switch (item.id) {
         case 'ecolage':
-          return can('manage_fees') || can('view_all_fees') || can('view_child_fees');
+          return can('manage_fees') || can('view_fees') || can('view_all_fees') || can('view_child_fees');
         case 'financial-transactions':
-          return can('manage_finances') || can('view_finances') || is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
+          return can('manage_finances') || can('view_finances') || is([USER_ROLES.PDG, USER_ROLES.DIRECTOR, USER_ROLES.SECRETARY]);
         case 'salary-management':
         case 'payroll':
-          return can('manage_finances') || can('view_finances') || is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
+          // Salaires et bulletins de paie: uniquement PDG et Directeur
+          return is([USER_ROLES.PDG, USER_ROLES.DIRECTOR]);
         default:
           return true;
       }
