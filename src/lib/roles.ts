@@ -27,11 +27,10 @@ export const PERMISSIONS = {
     'manage_enrollments', 'generate_certificates', 'manage_attendance'
   ],
 
-  // Secretary - ADMINISTRATIVE MANAGEMENT
+  // Secretary - READ-ONLY ACCESS (Consultation uniquement)
   [USER_ROLES.SECRETARY]: [
-    'manage_students', 'manage_fees', 'generate_certificates',
-    'manage_communications', 'view_schedules', 'manage_enrollments',
-    'view_students', 'view_classes', 'view_teachers', 'manage_attendance'
+    'view_students', 'view_teachers', 'view_classes', 'view_subjects',
+    'view_fees', 'view_finances', 'view_schedules', 'generate_certificates'
   ]
 };
 
@@ -74,4 +73,23 @@ export const getRoleDisplayName = (role: string): string => {
     default:
       return 'Utilisateur';
   }
+};
+
+// Get role badge color
+export const getRoleBadgeColor = (role: string): string => {
+  switch (role) {
+    case USER_ROLES.PDG:
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case USER_ROLES.DIRECTOR:
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case USER_ROLES.SECRETARY:
+      return 'bg-green-100 text-green-800 border-green-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
+// Check if user can modify data (create, update, delete)
+export const canModifyData = (userRole: string): boolean => {
+  return userRole === USER_ROLES.PDG || userRole === USER_ROLES.DIRECTOR;
 };

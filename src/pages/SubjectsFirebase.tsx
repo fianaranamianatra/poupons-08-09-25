@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, BookOpen, Clock, Users, Edit, Trash2, Eye } from 'lucide-react';
+import { Search, Plus, BookOpen, Clock, Users, CreditCard as Edit, Trash2, Eye, Lock } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { SubjectForm } from '../components/forms/SubjectForm';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { subjectsService, teachersService } from '../lib/firebase/firebaseService';
+import { usePermissions } from '../hooks/usePermissions';
+import { USER_ROLES, canModifyData } from '../lib/roles';
 
 interface Subject {
   id?: string;
@@ -28,6 +30,10 @@ const colorClasses = {
 };
 
 export function SubjectsFirebase() {
+  const { is, role } = usePermissions();
+  const isSecretary = is([USER_ROLES.SECRETARY]);
+  const canModify = role ? canModifyData(role) : false;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [allTeachers, setAllTeachers] = useState<any[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -189,23 +195,31 @@ export function SubjectsFirebase() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestion des Matières</h1>
           <p className="text-gray-600">Gérez le programme pédagogique de l'école</p>
-        </div>
-        
-        <button
-          onClick={() => {
-            console.log('🔘 Ouverture du formulaire d\'ajout de matière');
-            setShowAddForm(true);
-          }}
-          disabled={creating}
-          className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-        >
-          {creating ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-          ) : (
-            <Plus className="w-4 h-4 mr-2" />
+          {isSecretary && (
+            <div className="flex items-center mt-2 text-sm text-gray-500">
+              <Lock className="w-4 h-4 mr-1" />
+              <span>Accès en consultation uniquement</span>
+            </div>
           )}
-          Ajouter une Matière
-        </button>
+        </div>
+
+        {canModify && (
+          <button
+            onClick={() => {
+              console.log('🔘 Ouverture du formulaire d\'ajout de matière');
+              setShowAddForm(true);
+            }}
+            disabled={creating}
+            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+          >
+            {creating ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
+            Ajouter une Matière
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -360,29 +374,36 @@ export function SubjectsFirebase() {
               {/* Actions */}
               <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
                 <div className="flex items-center space-x-2">
-                  <button 
+                  <button
                     onClick={() => handleViewSubject(subject)}
                     className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Consulter"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
-                  <button 
-                    onClick={() => handleEditClick(subject)}
-                    disabled={updating}
-                    className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => subject.id && handleDeleteSubject(subject.id)}
-                    disabled={deleting}
-                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canModify && (
+                    <>
+                      <button
+                        onClick={() => handleEditClick(subject)}
+                        disabled={updating}
+                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                        title="Modifier"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => subject.id && handleDeleteSubject(subject.id)}
+                        disabled={deleting}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
-                
-                <button 
+
+                <button
                   onClick={() => handleViewSubject(subject)}
                   className="text-xs text-purple-600 hover:text-purple-700 font-medium"
                 >

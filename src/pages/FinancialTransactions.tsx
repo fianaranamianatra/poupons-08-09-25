@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, Download, TrendingUp, TrendingDown, DollarSign, Calendar, Eye, Edit, Trash2, AlertTriangle, CheckCircle, RefreshCw, Zap } from 'lucide-react';
+import { Search, Plus, Filter, Download, TrendingUp, TrendingDown, DollarSign, Calendar, Eye, CreditCard as Edit, Trash2, AlertTriangle, CheckCircle, RefreshCw, Zap, Lock } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { TransactionForm } from '../components/forms/TransactionForm';
 import { Avatar } from '../components/Avatar';
@@ -7,6 +7,8 @@ import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { transactionsService } from '../lib/firebase/firebaseService';
 import { TransactionDeduplicationService } from '../lib/services/transactionDeduplicationService';
 import { CentralizedSyncPanel } from '../components/financial/CentralizedSyncPanel';
+import { usePermissions } from '../hooks/usePermissions';
+import { USER_ROLES, canModifyData } from '../lib/roles';
 
 interface Transaction {
   id?: string;
@@ -38,6 +40,10 @@ const typeColors = {
 };
 
 export default function FinancialTransactions() {
+  const { is, role } = usePermissions();
+  const isSecretary = is([USER_ROLES.SECRETARY]);
+  const canModify = role ? canModifyData(role) : false;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -323,52 +329,64 @@ export default function FinancialTransactions() {
         <div>
           <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900`}>Encaissements et Décaissements</h1>
           <p className={`${isMobile ? 'text-sm' : ''} text-gray-600`}>Gestion centralisée des flux financiers</p>
-          <div className="flex items-center space-x-4 mt-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-xs text-blue-600 font-medium">
-              Synchronisation automatique avec Écolage et Salaires
-            </span>
-            <span className="text-xs text-green-600 font-medium">
-              Déduplication automatique active
-            </span>
-          </div>
+          {isSecretary && (
+            <div className="flex items-center mt-2 text-sm text-gray-500">
+              <Lock className="w-4 h-4 mr-1" />
+              <span>Accès en consultation uniquement</span>
+            </div>
+          )}
+          {!isSecretary && (
+            <div className="flex items-center space-x-4 mt-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-xs text-blue-600 font-medium">
+                Synchronisation automatique avec Écolage et Salaires
+              </span>
+              <span className="text-xs text-green-600 font-medium">
+                Déduplication automatique active
+              </span>
+            </div>
+          )}
         </div>
-        
+
         <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
+          {canModify && (
+            <button
+              onClick={handleManualDeduplication}
+              disabled={isDeduplicating}
+              className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50`}
+            >
+              {isDeduplicating ? (
+                <div className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} border-2 border-red-600 border-t-transparent rounded-full animate-spin mr-2`}></div>
+              ) : (
+                <Zap className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
+              )}
+              {isDeduplicating ? 'Suppression...' : 'Supprimer Doublons'}
+            </button>
+          )}
           <button
-            onClick={handleManualDeduplication}
-            disabled={isDeduplicating}
-            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50`}
-          >
-            {isDeduplicating ? (
-              <div className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} border-2 border-red-600 border-t-transparent rounded-full animate-spin mr-2`}></div>
-            ) : (
-              <Zap className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
-            )}
-            {isDeduplicating ? 'Suppression...' : 'Supprimer Doublons'}
-          </button>
-          <button 
             onClick={handleExport}
             className={`${isMobile ? 'hidden sm:inline-flex' : 'inline-flex'} items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors`}
           >
             <Download className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
             Exporter
           </button>
-          <button
-            onClick={() => {
-              console.log('🔘 Ouverture du formulaire d\'ajout de transaction');
-              setShowAddForm(true);
-            }}
-            disabled={creating}
-            className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50`}
-          >
-            {creating ? (
-              <div className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} border-2 border-white border-t-transparent rounded-full animate-spin mr-2`}></div>
-            ) : (
-              <Plus className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
-            )}
-            Nouvelle Transaction
-          </button>
+          {canModify && (
+            <button
+              onClick={() => {
+                console.log('🔘 Ouverture du formulaire d\'ajout de transaction');
+                setShowAddForm(true);
+              }}
+              disabled={creating}
+              className={`inline-flex items-center justify-center ${isMobile ? 'px-4 py-3 text-base' : 'px-4 py-2'} bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50`}
+            >
+              {creating ? (
+                <div className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} border-2 border-white border-t-transparent rounded-full animate-spin mr-2`}></div>
+              ) : (
+                <Plus className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-2'}`} />
+              )}
+              Nouvelle Transaction
+            </button>
+          )}
         </div>
       </div>
 
@@ -639,15 +657,16 @@ export default function FinancialTransactions() {
                     </td>
                     <td className={`${isMobile ? 'py-3 px-3' : 'py-4 px-6'}`}>
                       <div className={`flex items-center ${isMobile ? 'space-x-1' : 'space-x-2'}`}>
-                        <button 
+                        <button
                           onClick={() => handleViewTransaction(transaction)}
                           className={`${isMobile ? 'p-2' : 'p-1.5'} text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors`}
+                          title="Consulter"
                         >
                           <Eye className={`${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
                         </button>
-                        {!isMobile && (
+                        {!isMobile && canModify && (
                           <>
-                            <button 
+                            <button
                               onClick={() => handleEditClick(transaction)}
                               disabled={updating}
                               className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
