@@ -26,7 +26,7 @@ export default function UserManagement() {
   };
 
   const handleDelete = async (user: User) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.firstName} ${user.lastName} ?`)) {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.firstName || 'N/A'} ${user.lastName || 'N/A'} ?`)) {
       return;
     }
 
@@ -70,9 +70,9 @@ export default function UserManagement() {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch =
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      (user.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesStatus = filterStatus === 'all' ||
@@ -203,18 +203,18 @@ export default function UserManagement() {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
                           <span className="text-orange-600 font-semibold">
-                            {user.firstName[0]}{user.lastName[0]}
+                            {(user.firstName || 'U')[0]}{(user.lastName || 'U')[0]}
                           </span>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {user.firstName} {user.lastName}
+                            {user.firstName || 'N/A'} {user.lastName || 'N/A'}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.email}</div>
+                      <div className="text-sm text-gray-900">{user.email || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
