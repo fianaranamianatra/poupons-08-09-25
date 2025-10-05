@@ -325,21 +325,6 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
             </li>
           </ul>
         </nav>
-
-        {/* Footer */}
-        {((!collapsed && !isMobile) || (isMobile && mobileMenuOpen)) && (
-          <div className={`absolute bottom-4 ${isMobile ? 'left-6 right-6' : 'left-4 right-4'}`}>
-            <div className={`bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg ${isMobile ? 'p-5' : 'p-4'} text-white`}>
-              <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-sm'}`}>Support</h3>
-              <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-blue-100 mt-1`}>
-                Besoin d'aide ? Contactez notre équipe.
-              </p>
-              <button className={`mt-2 ${isMobile ? 'text-sm px-4 py-2' : 'text-xs px-3 py-1'} bg-white text-blue-600 rounded-md hover:bg-blue-50 transition-colors`}>
-                Contacter
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Mobile Menu Button - Affiché uniquement sur mobile */}
