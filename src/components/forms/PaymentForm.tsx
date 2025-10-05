@@ -356,16 +356,18 @@ export function PaymentForm({ onSubmit, onCancel, initialData, students = [], cl
             placeholder="Notes additionnelles..."
             className={`w-full ${isMobile ? 'px-4 py-3 text-base' : 'px-3 py-2'} border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent`}
           />
-          
+
           {/* Indicateur de montant configuré */}
-          <div className="mt-1">
-            <ClassAmountIndicator
-              className={payment.class}
-              level=""
-              currentAmount={payment.amount}
-              compact={true}
-            />
-          </div>
+          {formData.class && formData.amount && (
+            <div className="mt-1">
+              <ClassAmountIndicator
+                className={formData.class}
+                level=""
+                currentAmount={parseFloat(formData.amount) || 0}
+                compact={true}
+              />
+            </div>
+          )}
         </div>
       </div>
 
