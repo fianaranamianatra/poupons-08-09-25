@@ -48,7 +48,7 @@ export function IRSABaremeDisplay({ className = '' }: IRSABaremeDisplayProps) {
           <Info className="w-4 h-4 text-purple-600 mt-0.5" />
           <div className="text-xs text-purple-700">
             <p className="font-medium mb-1">Calcul progressif :</p>
-            <p>• Base imposable = Salaire brut - CNAPS (1%) - OSTIE (1%)</p>
+            <p>• Base imposable = Salaire brut - CNAPS salariale (1,8%)</p>
             <p>• Application du barème par tranche</p>
             <p>• Déduction mensuelle sur le salaire</p>
           </div>
