@@ -29,10 +29,10 @@ export class IRSAService {
   // Barème IRSA Madagascar 2024
   private static readonly BAREME_IRSA: IRSABareme = {
     tranches: [
-      { min: 0, max: 350000, taux: 0, description: "Exonéré" },
-      { min: 350001, max: 400000, taux: 5, description: "5%" },
-      { min: 400001, max: 500000, taux: 10, description: "10%" },
-      { min: 500001, max: 600000, taux: 15, description: "15%" },
+      { min: 0, max: 150000, taux: 0, description: "Exonéré" },
+      { min: 150001, max: 250000, taux: 5, description: "5%" },
+      { min: 250001, max: 400000, taux: 10, description: "10%" },
+      { min: 400001, max: 600000, taux: 15, description: "15%" },
       { min: 600001, max: null, taux: 20, description: "20%" }
     ],
     abattementBase: 0, // Pas d'abattement de base actuellement
@@ -41,7 +41,7 @@ export class IRSAService {
 
   /**
    * Calcule l'IRSA selon le barème progressif malgache
-   * @param salaireImposable Salaire après déduction CNAPS et OSTIE
+   * @param salaireImposable Salaire imposable (Salaire brut - CNAPS salariale)
    * @returns Calcul détaillé de l'IRSA
    */
   static calculerIRSA(salaireImposable: number): IRSACalculation {
@@ -151,20 +151,20 @@ export class IRSAService {
    * Valide si un montant est soumis à l'IRSA
    */
   static estSoumisIRSA(salaireImposable: number): boolean {
-    return salaireImposable > 350000; // Seuil d'exonération
+    return salaireImposable > 150000; // Seuil d'exonération
   }
 
   /**
    * Calcule le salaire net après toutes déductions (CNAPS, OSTIE, IRSA)
    */
-  static calculerSalaireNet(salaireBrut: number, cnaps: number, ostie: number): {
+  static calculerSalaireNet(salaireBrut: number, cnaps: number): {
     salaireImposable: number;
     irsa: number;
     salaireNet: number;
   } {
-    const salaireImposable = salaireBrut - cnaps - ostie;
+    const salaireImposable = salaireBrut - cnaps;
     const irsaCalculation = this.calculerIRSA(salaireImposable);
-    const salaireNet = salaireImposable - irsaCalculation.montantTotal;
+    const salaireNet = salaireBrut - cnaps - irsaCalculation.montantTotal;
 
     return {
       salaireImposable,

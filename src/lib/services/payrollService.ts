@@ -47,27 +47,28 @@ export interface PayrollSummary {
 
 export class PayrollService {
   static async calculatePayroll(employeeId: string, grossSalary: number): Promise<PayrollCalculation> {
-    // Mock calculation - in real app, this would use actual settings
-    const cnapsSalarieRate = 1;
-    const cnapsEmployeurRate = 13;
-    const ostieSalarieRate = 1;
-    const ostieEmployeurRate = 5;
-    
+    // Taux officiels selon la réglementation malgache
+    const cnapsSalarieRate = 1.8; // Part salariale CNAPS
+    const cnapsEmployeurRate = 8.2; // Part patronale CNAPS
+    const ostieRate = 1.5; // OSTIE (sur le salaire brut)
+
+    // CNAPS : 10% du salaire brut (1,8% salarié + 8,2% employeur)
     const cnapsEmployeeContribution = Math.round(grossSalary * cnapsSalarieRate / 100);
     const cnapsEmployerContribution = Math.round(grossSalary * cnapsEmployeurRate / 100);
-    const ostieEmployeeContribution = Math.round(grossSalary * ostieSalarieRate / 100);
-    const ostieEmployerContribution = Math.round(grossSalary * ostieEmployeurRate / 100);
-    
-    // Calcul du salaire imposable (après CNAPS et OSTIE salarié)
-    const salaireImposable = grossSalary - cnapsEmployeeContribution - ostieEmployeeContribution;
-    
+
+    // OSTIE : 1,5% du salaire brut
+    const ostieContribution = Math.round(grossSalary * ostieRate / 100);
+
+    // Calcul du salaire imposable (Salaire brut - CNAPS salariale)
+    const salaireImposable = grossSalary - cnapsEmployeeContribution;
+
     // Calcul de l'IRSA
     const irsaCalculation = IRSAService.calculerIRSA(salaireImposable);
     console.log(`💰 IRSA calculé: ${irsaCalculation.montantTotal.toLocaleString()} MGA`);
-    
-    const totalEmployeeContributions = cnapsEmployeeContribution + ostieEmployeeContribution + irsaCalculation.montantTotal;
-    const totalEmployerContributions = cnapsEmployerContribution + ostieEmployerContribution;
-    const netSalary = salaireImposable - irsaCalculation.montantTotal;
+
+    const totalEmployeeContributions = cnapsEmployeeContribution + irsaCalculation.montantTotal;
+    const totalEmployerContributions = cnapsEmployerContribution + ostieContribution;
+    const netSalary = grossSalary - cnapsEmployeeContribution - irsaCalculation.montantTotal;
     const totalEmployerCost = grossSalary + totalEmployerContributions;
 
     return {
@@ -85,12 +86,12 @@ export class PayrollService {
       ostie: {
         isActive: true,
         rate: {
-          employee: ostieSalarieRate,
-          employer: ostieEmployeurRate
+          employee: 0, // OSTIE n'est pas une charge salariale
+          employer: ostieRate
         },
-        employeeContribution: ostieEmployeeContribution,
-        employerContribution: ostieEmployerContribution,
-        total: ostieEmployeeContribution + ostieEmployerContribution
+        employeeContribution: 0,
+        employerContribution: ostieContribution,
+        total: ostieContribution
       },
       irsa: {
         isActive: true,
@@ -147,7 +148,6 @@ SALAIRE BRUT:           ${summary.calculation.grossSalary.toLocaleString()} Ar
 
 COTISATIONS SALARIALES:
 - CNAPS (${summary.calculation.cnaps.rate.employee}%):        -${summary.calculation.cnaps.employeeContribution.toLocaleString()} Ar
-- OSTIE (${summary.calculation.ostie.rate.employee}%):        -${summary.calculation.ostie.employeeContribution.toLocaleString()} Ar
 
 SALAIRE IMPOSABLE:      ${summary.calculation.salaireImposable.toLocaleString()} Ar
 
