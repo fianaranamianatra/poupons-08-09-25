@@ -127,17 +127,17 @@ export function SalaryCalculationForm({
     if (baseSalary > 0) {
       const totalAllowances = Object.values(allowances).reduce((sum, val) => sum + val, 0);
       const grossSalary = baseSalary + totalAllowances;
-      
-      // Calcul des déductions légales
-      const cnaps = Math.round(grossSalary * 0.01); // 1% CNAPS salarié
-      const ostie = Math.round(grossSalary * 0.01); // 1% OSTIE salarié
-      const taxableIncome = grossSalary - cnaps - ostie;
-      
+
+      // Calcul des déductions légales selon la réglementation malgache
+      const cnaps = Math.round(grossSalary * 0.018); // 1,8% CNAPS salarié
+      const ostie = 0; // OSTIE n'est pas une déduction salariale (charge patronale uniquement)
+      const taxableIncome = grossSalary - cnaps; // Base imposable = Salaire brut - CNAPS salariale
+
       // Calcul IRSA avec le service dédié
       const irsaCalculation = IRSAService.calculerIRSA(taxableIncome);
       const irsa = irsaCalculation.montantTotal;
-      
-      const totalDeductions = cnaps + ostie + irsa;
+
+      const totalDeductions = cnaps + irsa;
       const netSalary = grossSalary - totalDeductions;
 
       setCalculation({
@@ -573,12 +573,8 @@ export function SalaryCalculationForm({
                 
                 <div className="border-t border-gray-200 pt-3 space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">CNAPS (1% salarié):</span>
+                    <span className="text-sm text-gray-600">CNAPS (1,8% salarié):</span>
                     <span className="font-medium text-red-600">-{calculation.cnaps.toLocaleString()} Ar</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">OSTIE (1% salarié):</span>
-                    <span className="font-medium text-red-600">-{calculation.ostie.toLocaleString()} Ar</span>
                   </div>
                   <div className="flex justify-between border-t border-gray-200 pt-2">
                     <span className="text-sm font-medium text-gray-700">Salaire Imposable:</span>
@@ -594,7 +590,7 @@ export function SalaryCalculationForm({
                   <h5 className="font-medium text-purple-800">Calcul IRSA (Impôt sur Revenus)</h5>
                 </div>
                 
-                {calculation.taxableIncome > 350000 ? (
+                {calculation.taxableIncome > 150000 ? (
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Base imposable:</span>
@@ -615,7 +611,7 @@ export function SalaryCalculationForm({
                   <div className="bg-green-50 border border-green-200 rounded p-3">
                     <p className="text-sm text-green-700 flex items-center">
                       <CheckCircle className="w-4 h-4 mr-2" />
-                      Salaire exonéré d'IRSA (≤ 350 000 Ar)
+                      Salaire exonéré d'IRSA (≤ 150 000 Ar)
                     </p>
                   </div>
                 )}
@@ -631,7 +627,7 @@ export function SalaryCalculationForm({
                   <p className="text-sm text-gray-600 mb-2">Total des Déductions</p>
                   <p className="text-2xl font-bold text-red-600">-{calculation.totalDeductions.toLocaleString()} Ar</p>
                   <div className="text-xs text-gray-500 mt-1">
-                    CNAPS + OSTIE + IRSA
+                    CNAPS + IRSA
                   </div>
                 </div>
               </div>
@@ -656,18 +652,18 @@ export function SalaryCalculationForm({
                 </h5>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">CNAPS Employeur (13%):</span>
-                    <span className="font-medium text-orange-600">+{Math.round(calculation.grossSalary * 0.13).toLocaleString()} Ar</span>
+                    <span className="text-gray-600">CNAPS Employeur (8,2%):</span>
+                    <span className="font-medium text-orange-600">+{Math.round(calculation.grossSalary * 0.082).toLocaleString()} Ar</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">OSTIE Employeur (5%):</span>
-                    <span className="font-medium text-orange-600">+{Math.round(calculation.grossSalary * 0.05).toLocaleString()} Ar</span>
+                    <span className="text-gray-600">OSTIE (1,5%):</span>
+                    <span className="font-medium text-orange-600">+{Math.round(calculation.grossSalary * 0.015).toLocaleString()} Ar</span>
                   </div>
                   <div className="border-t border-gray-300 pt-2">
                     <div className="flex justify-between font-bold">
                       <span className="text-gray-700">Coût Total Employeur:</span>
                       <span className="text-purple-600">
-                        {(calculation.grossSalary + Math.round(calculation.grossSalary * 0.18)).toLocaleString()} Ar
+                        {(calculation.grossSalary + Math.round(calculation.grossSalary * 0.082) + Math.round(calculation.grossSalary * 0.015)).toLocaleString()} Ar
                       </span>
                     </div>
                   </div>
