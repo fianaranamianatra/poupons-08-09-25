@@ -2,19 +2,20 @@
 
 ## Règles de Calcul
 
-### 1. CNAPS (Caisse Nationale de Prévoyance Sociale)
-- **Part salariale** : 1,8% du salaire brut
-- **Part patronale** : 8,2% du salaire brut
-- **Total CNAPS** : 10% du salaire brut
+### 1. OSTIE (Contribution Sociale Généralisée)
+- **Part salariale uniquement** : 2% du salaire brut
+- Formule : OSTIE = Salaire Brut × 2%
 
-### 2. OSTIE (Organisme Sanitaire Tananarivien Inter-Entreprises)
-- **Cotisation patronale uniquement** : 1,5% du salaire brut
-- OSTIE n'est **PAS** une déduction sur le salaire de l'employé
+### 2. CNAPS (Caisse Nationale de Prévoyance Sociale)
+- **Part salariale** : 1% du salaire brut
+- **Part patronale** : 13% du salaire brut
+- Formule : CNAPS = Salaire Brut × 1%
 
 ### 3. IRSA (Impôt sur les Revenus Salariaux et Assimilés)
 
 #### Base de calcul
-- **Salaire imposable** = Salaire brut - CNAPS salariale (1,8%)
+- **Salaire imposable** = Salaire brut - CNAPS salariale (1%)
+- **Minimum de perception** : Si (Salaire Brut - CNAPS) < 3 000 Ar, alors Salaire imposable = 3 000 Ar
 
 #### Barème progressif par tranches
 
@@ -26,36 +27,53 @@
 | 4 | 400 001 | 600 000 | 15% |
 | 5 | 600 001 | ∞ | 20% |
 
-## Exemple de Calcul
+## Exemple de Calcul 1 : Salaire Brut = 250 000 Ar
 
-### Salaire brut : 1 000 000 Ar
+1. **OSTIE (2%)** : 250 000 × 2% = **5 000 Ar**
+2. **CNAPS salariale (1%)** : 250 000 × 1% = **2 500 Ar**
+3. **Salaire imposable** : 250 000 - 2 500 = 247 500 Ar
+   - Comparaison : 247 500 Ar > 3 000 Ar ✓
+   - Salaire imposable = **247 500 Ar**
+4. **Calcul IRSA** :
+   - Tranche 1 (0 - 150 000) : 150 000 × 0% = 0 Ar
+   - Tranche 2 (150 001 - 247 500) : 97 500 × 5% = 4 875 Ar
+   - **IRSA total** : **4 875 Ar**
+5. **Salaire net** : 250 000 - 5 000 - 2 500 - 4 875 = **237 625 Ar**
 
-1. **CNAPS salariale** : 1 000 000 × 1,8% = **18 000 Ar**
-2. **Salaire imposable** : 1 000 000 - 18 000 = **982 000 Ar**
-3. **Calcul IRSA** :
+### Charges patronales
+- **CNAPS patronale (13%)** : 250 000 × 13% = **32 500 Ar**
+- **Coût total employeur** : 250 000 + 32 500 = **282 500 Ar**
+
+## Exemple de Calcul 2 : Salaire Brut = 1 000 000 Ar
+
+1. **OSTIE (2%)** : 1 000 000 × 2% = **20 000 Ar**
+2. **CNAPS salariale (1%)** : 1 000 000 × 1% = **10 000 Ar**
+3. **Salaire imposable** : 1 000 000 - 10 000 = **990 000 Ar**
+4. **Calcul IRSA** :
    - Tranche 1 (0 - 150 000) : 150 000 × 0% = 0 Ar
    - Tranche 2 (150 001 - 250 000) : 100 000 × 5% = 5 000 Ar
    - Tranche 3 (250 001 - 400 000) : 150 000 × 10% = 15 000 Ar
    - Tranche 4 (400 001 - 600 000) : 200 000 × 15% = 30 000 Ar
-   - Tranche 5 (600 001 - 982 000) : 382 000 × 20% = 76 400 Ar
-   - **IRSA total** : 5 000 + 15 000 + 30 000 + 76 400 = **126 400 Ar**
-4. **Salaire net** : 1 000 000 - 18 000 - 126 400 = **855 600 Ar**
+   - Tranche 5 (600 001 - 990 000) : 390 000 × 20% = 78 000 Ar
+   - **IRSA total** : 5 000 + 15 000 + 30 000 + 78 000 = **128 000 Ar**
+5. **Salaire net** : 1 000 000 - 20 000 - 10 000 - 128 000 = **842 000 Ar**
 
 ### Charges patronales
-- **CNAPS patronale** : 1 000 000 × 8,2% = **82 000 Ar**
-- **OSTIE** : 1 000 000 × 1,5% = **15 000 Ar**
-- **Total charges patronales** : 82 000 + 15 000 = **97 000 Ar**
-- **Coût total employeur** : 1 000 000 + 97 000 = **1 097 000 Ar**
+- **CNAPS patronale (13%)** : 1 000 000 × 13% = **130 000 Ar**
+- **Coût total employeur** : 1 000 000 + 130 000 = **1 130 000 Ar**
+
+## Résumé des Déductions
+
+### Déductions Salariales (prélevées sur le salaire)
+1. OSTIE : 2% du salaire brut
+2. CNAPS : 1% du salaire brut
+3. IRSA : Calculé sur le salaire imposable selon barème progressif
+
+### Charges Patronales (payées par l'employeur)
+1. CNAPS : 13% du salaire brut
 
 ## Fichiers Modifiés
 
 ### Services
-- `src/lib/services/irsaService.ts` - Mise à jour du barème IRSA et des seuils
-- `src/lib/services/payrollService.ts` - Mise à jour des taux CNAPS et OSTIE
-
-### Composants
-- `src/components/forms/SalaryCalculationForm.tsx` - Mise à jour de l'interface de calcul
-- `src/components/IRSABaremeDisplay.tsx` - Mise à jour de l'affichage du barème
-
-### Composants (dossier legacy)
-- `components/forms/SalaryCalculationForm.tsx` - Synchronisé avec la version src/
+- `src/lib/services/irsaService.ts` - Barème IRSA progressif
+- `src/lib/services/payrollService.ts` - Taux CNAPS 1%, OSTIE 2%, minimum de perception 3 000 Ar
