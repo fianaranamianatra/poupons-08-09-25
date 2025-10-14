@@ -48,27 +48,31 @@ export interface PayrollSummary {
 export class PayrollService {
   static async calculatePayroll(employeeId: string, grossSalary: number): Promise<PayrollCalculation> {
     // Taux officiels selon la réglementation malgache
-    const cnapsSalarieRate = 1.8; // Part salariale CNAPS
-    const cnapsEmployeurRate = 8.2; // Part patronale CNAPS
-    const ostieRate = 1.5; // OSTIE (sur le salaire brut)
+    const cnapsSalarieRate = 1; // Part salariale CNAPS
+    const cnapsEmployeurRate = 13; // Part patronale CNAPS
+    const ostieRate = 2; // OSTIE (sur le salaire brut)
 
-    // CNAPS : 10% du salaire brut (1,8% salarié + 8,2% employeur)
+    // CNAPS : 1% du salaire brut (part salariale)
     const cnapsEmployeeContribution = Math.round(grossSalary * cnapsSalarieRate / 100);
     const cnapsEmployerContribution = Math.round(grossSalary * cnapsEmployeurRate / 100);
 
-    // OSTIE : 1,5% du salaire brut
-    const ostieContribution = Math.round(grossSalary * ostieRate / 100);
+    // OSTIE : 2% du salaire brut (part salariale)
+    const ostieEmployeeContribution = Math.round(grossSalary * ostieRate / 100);
 
     // Calcul du salaire imposable (Salaire brut - CNAPS salariale)
-    const salaireImposable = grossSalary - cnapsEmployeeContribution;
+    // Avec minimum de perception de 3 000 Ar
+    let salaireImposable = grossSalary - cnapsEmployeeContribution;
+    if (salaireImposable < 3000) {
+      salaireImposable = 3000;
+    }
 
     // Calcul de l'IRSA
     const irsaCalculation = IRSAService.calculerIRSA(salaireImposable);
     console.log(`💰 IRSA calculé: ${irsaCalculation.montantTotal.toLocaleString()} MGA`);
 
-    const totalEmployeeContributions = cnapsEmployeeContribution + irsaCalculation.montantTotal;
-    const totalEmployerContributions = cnapsEmployerContribution + ostieContribution;
-    const netSalary = grossSalary - cnapsEmployeeContribution - irsaCalculation.montantTotal;
+    const totalEmployeeContributions = cnapsEmployeeContribution + ostieEmployeeContribution + irsaCalculation.montantTotal;
+    const totalEmployerContributions = cnapsEmployerContribution;
+    const netSalary = grossSalary - cnapsEmployeeContribution - ostieEmployeeContribution - irsaCalculation.montantTotal;
     const totalEmployerCost = grossSalary + totalEmployerContributions;
 
     return {
@@ -86,12 +90,12 @@ export class PayrollService {
       ostie: {
         isActive: true,
         rate: {
-          employee: 0, // OSTIE n'est pas une charge salariale
-          employer: ostieRate
+          employee: ostieRate,
+          employer: 0
         },
-        employeeContribution: 0,
-        employerContribution: ostieContribution,
-        total: ostieContribution
+        employeeContribution: ostieEmployeeContribution,
+        employerContribution: 0,
+        total: ostieEmployeeContribution
       },
       irsa: {
         isActive: true,
@@ -148,6 +152,7 @@ SALAIRE BRUT:           ${summary.calculation.grossSalary.toLocaleString()} Ar
 
 COTISATIONS SALARIALES:
 - CNAPS (${summary.calculation.cnaps.rate.employee}%):        -${summary.calculation.cnaps.employeeContribution.toLocaleString()} Ar
+- OSTIE (${summary.calculation.ostie.rate.employee}%):        -${summary.calculation.ostie.employeeContribution.toLocaleString()} Ar
 
 SALAIRE IMPOSABLE:      ${summary.calculation.salaireImposable.toLocaleString()} Ar
 
@@ -160,8 +165,7 @@ SALAIRE NET:            ${summary.calculation.netSalary.toLocaleString()} Ar
 
 ========================================
 CHARGES PATRONALES:
-- CNAPS (${summary.calculation.cnaps.rate.employer}%):       +${summary.calculation.cnaps.employerContribution.toLocaleString()} Ar
-- OSTIE (${summary.calculation.ostie.rate.employer}%):        +${summary.calculation.ostie.employerContribution.toLocaleString()} Ar
+- CNAPS (${summary.calculation.cnaps.rate.employer}%):      +${summary.calculation.cnaps.employerContribution.toLocaleString()} Ar
                         ─────────────────
 TOTAL CHARGES:          +${summary.calculation.totalEmployerContributions.toLocaleString()} Ar
 
