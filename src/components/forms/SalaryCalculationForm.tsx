@@ -110,23 +110,64 @@ export function SalaryCalculationForm({
     }
   }, [selectedEmployeeId, employees]);
 
-  // Effet pour le calcul automatisé en temps réel
+  // Effet pour le calcul automatisé en temps réel selon la législation malgache
   useEffect(() => {
     if (baseSalary > 0) {
       const totalAllowances = Object.values(allowances).reduce((sum, val) => sum + val, 0);
       const grossSalary = baseSalary + totalAllowances;
 
-      // Calcul des déductions légales selon la réglementation malgache
-      const cnaps = Math.round(grossSalary * 0.018); // 1,8% CNAPS salarié
-      const ostie = 0; // OSTIE n'est pas une déduction salariale (charge patronale uniquement)
-      const taxableIncome = grossSalary - cnaps; // Base imposable = Salaire brut - CNAPS salariale
+      console.log(`\n💼 === NOUVEAU CALCUL DE SALAIRE ===`);
+      console.log(`📊 Salaire de Base: ${baseSalary.toLocaleString()} Ar`);
+      console.log(`📊 Indemnités: ${totalAllowances.toLocaleString()} Ar`);
+      console.log(`📊 Salaire Brut Total: ${grossSalary.toLocaleString()} Ar`);
 
-      // Calcul IRSA avec le service dédié
-      const irsaCalculation = IRSAService.calculerIRSA(taxableIncome);
+      // ÉTAPE 1: Calcul OSTIE (Contribution Sociale Généralisée) - 2%
+      const ostie = Math.round(grossSalary * 0.02);
+      console.log(`\n🔵 OSTIE (2%): ${ostie.toLocaleString()} Ar`);
+
+      // ÉTAPE 2: Calcul CNAPS (Cotisation à la Caisse Nationale de Prévoyance Sociale) - 1%
+      const cnaps = Math.round(grossSalary * 0.01);
+      console.log(`🔵 CNAPS (1%): ${cnaps.toLocaleString()} Ar`);
+
+      // ÉTAPE 3: Calcul du salaire imposable
+      // Formule: Salaire imposable = Salaire Brut - CNAPS
+      // Avec minimum de perception de 3 000 Ar
+      const salaireImposableBase = grossSalary - cnaps;
+      const minimumPerception = 3000;
+      const taxableIncome = Math.max(salaireImposableBase, minimumPerception);
+
+      console.log(`\n📊 Salaire imposable = ${grossSalary.toLocaleString()} - ${cnaps.toLocaleString()} = ${salaireImposableBase.toLocaleString()} Ar`);
+      if (salaireImposableBase < minimumPerception) {
+        console.log(`⚠️  Application du minimum de perception: ${minimumPerception.toLocaleString()} Ar`);
+        console.log(`💰 Salaire imposable final: ${taxableIncome.toLocaleString()} Ar`);
+      } else {
+        console.log(`✅ Salaire imposable: ${taxableIncome.toLocaleString()} Ar (> ${minimumPerception.toLocaleString()} Ar)`);
+      }
+
+      // ÉTAPE 4: Application de l'IRSA progressif
+      console.log(`\n📊 Application du barème IRSA progressif...`);
+      const irsaCalculation = IRSAService.calculerIRSA(grossSalary, cnaps);
       const irsa = irsaCalculation.montantTotal;
 
-      const totalDeductions = cnaps + irsa;
+      console.log(`\n🔴 IRSA calculé: ${irsa.toLocaleString()} Ar`);
+      console.log(`   Taux effectif: ${irsaCalculation.tauxEffectif.toFixed(2)}%`);
+      console.log(`   Détail des tranches:`);
+      irsaCalculation.tranches.forEach((t, i) => {
+        console.log(`   - Tranche ${i + 1}: ${t.montantTranche.toLocaleString()} Ar × ${t.taux}% = ${t.impotTranche.toLocaleString()} Ar`);
+      });
+
+      // RÉSULTAT FINAL
+      const totalDeductions = ostie + cnaps + irsa;
       const netSalary = grossSalary - totalDeductions;
+
+      console.log(`\n✅ === RÉSULTAT FINAL ===`);
+      console.log(`Salaire Brut: ${grossSalary.toLocaleString()} Ar`);
+      console.log(`- OSTIE (2%): ${ostie.toLocaleString()} Ar`);
+      console.log(`- CNAPS (1%): ${cnaps.toLocaleString()} Ar`);
+      console.log(`- IRSA: ${irsa.toLocaleString()} Ar`);
+      console.log(`= Total déductions: ${totalDeductions.toLocaleString()} Ar`);
+      console.log(`= Salaire NET: ${netSalary.toLocaleString()} Ar`);
+      console.log(`Taux de prélèvement global: ${((totalDeductions / grossSalary) * 100).toFixed(2)}%\n`);
 
       setCalculation({
         grossSalary,
@@ -136,12 +177,6 @@ export function SalaryCalculationForm({
         irsa,
         totalDeductions,
         netSalary
-      });
-
-      console.log(`🧮 Calcul automatique mis à jour:`, {
-        grossSalary: grossSalary.toLocaleString(),
-        netSalary: netSalary.toLocaleString(),
-        irsaRate: irsaCalculation.tauxEffectif
       });
     }
   }, [baseSalary, allowances]);
@@ -569,16 +604,22 @@ export function SalaryCalculationForm({
                   <span className="text-sm font-medium text-gray-700">Salaire Brut Total:</span>
                   <span className="text-lg font-bold text-gray-900">{calculation.grossSalary.toLocaleString()} Ar</span>
                 </div>
-                
+
                 <div className="border-t border-gray-200 pt-3 space-y-2">
+                  <p className="text-xs font-bold text-gray-700 mb-2">ÉTAPE 1 - Cotisations Obligatoires</p>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">CNAPS (1,8% salarié):</span>
+                    <span className="text-sm text-gray-600">OSTIE (2%):</span>
+                    <span className="font-medium text-red-600">-{calculation.ostie.toLocaleString()} Ar</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">CNAPS (1%):</span>
                     <span className="font-medium text-red-600">-{calculation.cnaps.toLocaleString()} Ar</span>
                   </div>
                   <div className="flex justify-between border-t border-gray-200 pt-2">
-                    <span className="text-sm font-medium text-gray-700">Salaire Imposable:</span>
+                    <span className="text-sm font-medium text-gray-700">ÉTAPE 2 - Salaire Imposable:</span>
                     <span className="font-bold text-blue-600">{calculation.taxableIncome.toLocaleString()} Ar</span>
                   </div>
+                  <p className="text-xs text-gray-500 italic">= Salaire Brut - CNAPS {calculation.taxableIncome > (calculation.grossSalary - calculation.cnaps) ? '(minimum 3 000 Ar appliqué)' : ''}</p>
                 </div>
               </div>
 
@@ -589,14 +630,35 @@ export function SalaryCalculationForm({
                   <h5 className="font-medium text-purple-800">Calcul IRSA (Impôt sur Revenus)</h5>
                 </div>
                 
+                <p className="text-xs font-bold text-purple-700 mb-2">ÉTAPE 3 - Application IRSA Progressif</p>
                 {calculation.taxableIncome > 150000 ? (
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Base imposable:</span>
                       <span className="font-medium">{calculation.taxableIncome.toLocaleString()} Ar</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">IRSA calculé:</span>
+                    <div className="bg-purple-50 border border-purple-200 rounded p-2 text-xs">
+                      <p className="font-medium text-purple-800 mb-1">Tranches applicables:</p>
+                      <div className="space-y-1 text-purple-700">
+                        {calculation.taxableIncome > 0 && calculation.taxableIncome <= 150000 && (
+                          <p>• 0 - 150 000 Ar: 0%</p>
+                        )}
+                        {calculation.taxableIncome > 150000 && calculation.taxableIncome <= 250000 && (
+                          <p>• 150 001 - 250 000 Ar: 5%</p>
+                        )}
+                        {calculation.taxableIncome > 250000 && calculation.taxableIncome <= 400000 && (
+                          <p>• 250 001 - 400 000 Ar: 10%</p>
+                        )}
+                        {calculation.taxableIncome > 400000 && calculation.taxableIncome <= 600000 && (
+                          <p>• 400 001 - 600 000 Ar: 15%</p>
+                        )}
+                        {calculation.taxableIncome > 600000 && (
+                          <p>• Au-delà de 600 000 Ar: 20%</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between border-t border-purple-300 pt-2">
+                      <span className="text-sm font-bold text-gray-700">IRSA calculé:</span>
                       <span className="font-bold text-red-600">-{calculation.irsa.toLocaleString()} Ar</span>
                     </div>
                     <div className="flex justify-between">
@@ -626,7 +688,12 @@ export function SalaryCalculationForm({
                   <p className="text-sm text-gray-600 mb-2">Total des Déductions</p>
                   <p className="text-2xl font-bold text-red-600">-{calculation.totalDeductions.toLocaleString()} Ar</p>
                   <div className="text-xs text-gray-500 mt-1">
-                    CNAPS + IRSA
+                    OSTIE + CNAPS + IRSA
+                  </div>
+                  <div className="text-xs text-gray-600 mt-2 space-y-1">
+                    <p>• OSTIE: {calculation.ostie.toLocaleString()} Ar</p>
+                    <p>• CNAPS: {calculation.cnaps.toLocaleString()} Ar</p>
+                    <p>• IRSA: {calculation.irsa.toLocaleString()} Ar</p>
                   </div>
                 </div>
               </div>
@@ -650,19 +717,20 @@ export function SalaryCalculationForm({
                   Charges Patronales (Information)
                 </h5>
                 <div className="space-y-2 text-sm">
+                  <p className="text-xs text-gray-600 mb-2">Les charges patronales ne sont pas déduites du salaire de l'employé</p>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">CNAPS Employeur (8,2%):</span>
-                    <span className="font-medium text-orange-600">+{Math.round(calculation.grossSalary * 0.082).toLocaleString()} Ar</span>
+                    <span className="text-gray-600">CNAPS Employeur (13%):</span>
+                    <span className="font-medium text-orange-600">+{Math.round(calculation.grossSalary * 0.13).toLocaleString()} Ar</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">OSTIE (1,5%):</span>
-                    <span className="font-medium text-orange-600">+{Math.round(calculation.grossSalary * 0.015).toLocaleString()} Ar</span>
+                    <span className="text-gray-600">OSTIE Employeur (5%):</span>
+                    <span className="font-medium text-orange-600">+{Math.round(calculation.grossSalary * 0.05).toLocaleString()} Ar</span>
                   </div>
                   <div className="border-t border-gray-300 pt-2">
                     <div className="flex justify-between font-bold">
                       <span className="text-gray-700">Coût Total Employeur:</span>
                       <span className="text-purple-600">
-                        {(calculation.grossSalary + Math.round(calculation.grossSalary * 0.082) + Math.round(calculation.grossSalary * 0.015)).toLocaleString()} Ar
+                        {(calculation.grossSalary + Math.round(calculation.grossSalary * 0.13) + Math.round(calculation.grossSalary * 0.05)).toLocaleString()} Ar
                       </span>
                     </div>
                   </div>
