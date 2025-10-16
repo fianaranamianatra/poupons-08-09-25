@@ -1,235 +1,378 @@
-// Service de calcul IRSA (Impôt sur les Revenus Salariaux et Assimilés)
-// Selon la réglementation fiscale malgache en vigueur
+/**
+ * Service de calcul IRSA (Impôt sur les Revenus Salariaux et Assimilés)
+ * Conforme à la réglementation fiscale malgache
+ *
+ * BARÈME OFFICIEL MADAGASCAR:
+ * - 0 à 350 000 Ar: 0%
+ * - 350 001 à 400 000 Ar: 5%
+ * - 400 001 à 500 000 Ar: 10%
+ * - 500 001 à 600 000 Ar: 15%
+ * - Au-delà de 600 000 Ar: 20%
+ *
+ * MINIMUM DE PERCEPTION: 3 000 Ar
+ */
 
-export interface IRSACalculation {
-  salaireImposable: number;
-  tranches: Array<{
-    min: number;
-    max: number;
-    taux: number;
-    montantTranche: number;
-    impotTranche: number;
-  }>;
-  montantTotal: number;
-  tauxEffectif: number;
+export interface TrancheFiscale {
+  min: number;
+  max: number | null;
+  taux: number;
+  description: string;
+  montantMaxTranche: number;
+  cumulPrecedent: number;
 }
 
-export interface IRSABareme {
-  tranches: Array<{
-    min: number;
-    max: number | null; // null pour la dernière tranche (illimitée)
-    taux: number;
-    description: string;
-  }>;
-  abattementBase: number;
+export interface DetailTranche {
+  min: number;
+  max: number;
+  taux: number;
+  montantDansTranche: number;
+  impotTranche: number;
+  formule: string;
+}
+
+export interface IRSACalculation {
+  revenuImposable: number;
+  tranches: DetailTranche[];
+  irsaAvantMinimum: number;
   minimumPerception: number;
-  isActive: boolean;
+  irsaFinal: number;
+  tauxEffectif: number;
+  notes: string[];
+}
+
+export interface CalculSalaireComplet {
+  salaireBrut: number;
+  ostie: number;
+  cnaps: number;
+  revenuImposable: number;
+  irsa: number;
+  irsaDetail: IRSACalculation;
+  totalDeductions: number;
+  salaireNet: number;
 }
 
 export class IRSAService {
-  // Barème IRSA Madagascar - Tranches progressives (Officiel)
-  private static readonly BAREME_IRSA: IRSABareme = {
-    tranches: [
-      { min: 0, max: 350000, taux: 0, description: "Exonéré" },
-      { min: 350001, max: 400000, taux: 5, description: "5%" },
-      { min: 400001, max: 500000, taux: 10, description: "10%" },
-      { min: 500001, max: 600000, taux: 15, description: "15%" },
-      { min: 600001, max: 650000, taux: 20, description: "20%" },
-      { min: 650001, max: null, taux: 20, description: "20%" }
-    ],
-    abattementBase: 0,
-    minimumPerception: 3000, // Minimum de perception IRSA
-    isActive: true
-  };
+  /**
+   * BARÈME IRSA OFFICIEL - MADAGASCAR 2024
+   * Tranches progressives conformes à la législation fiscale
+   */
+  private static readonly BAREME: TrancheFiscale[] = [
+    {
+      min: 0,
+      max: 350000,
+      taux: 0,
+      description: "0 à 350 000 Ar - Exonéré",
+      montantMaxTranche: 0,
+      cumulPrecedent: 0
+    },
+    {
+      min: 350001,
+      max: 400000,
+      taux: 5,
+      description: "350 001 à 400 000 Ar - 5%",
+      montantMaxTranche: 2500,
+      cumulPrecedent: 0
+    },
+    {
+      min: 400001,
+      max: 500000,
+      taux: 10,
+      description: "400 001 à 500 000 Ar - 10%",
+      montantMaxTranche: 10000,
+      cumulPrecedent: 2500
+    },
+    {
+      min: 500001,
+      max: 600000,
+      taux: 15,
+      description: "500 001 à 600 000 Ar - 15%",
+      montantMaxTranche: 15000,
+      cumulPrecedent: 12500
+    },
+    {
+      min: 600001,
+      max: null,
+      taux: 20,
+      description: "Au-delà de 600 000 Ar - 20%",
+      montantMaxTranche: 0,
+      cumulPrecedent: 27500
+    }
+  ];
+
+  private static readonly MINIMUM_PERCEPTION = 3000;
+  private static readonly TAUX_OSTIE = 0.02;
+  private static readonly TAUX_CNAPS = 0.01;
 
   /**
-   * Calcule l'IRSA selon le barème progressif malgache
-   * Applique le minimum de perception de 3 000 Ar
-   * @param salaireBrut Salaire brut
-   * @param cnaps CNAPS salariale
-   * @returns Calcul détaillé de l'IRSA
+   * Calcule le revenu imposable
+   * Formule: Revenu Imposable = Salaire Brut - OSTIE - CNaPS
+   *         RI = Salaire Brut × 0,97
    */
-  static calculerIRSA(salaireBrut: number, cnaps: number): IRSACalculation {
-    console.log(`🧮 Calcul IRSA - Salaire brut: ${salaireBrut.toLocaleString()} Ar, CNAPS: ${cnaps.toLocaleString()} Ar`);
+  static calculerRevenuImposable(salaireBrut: number): number {
+    const ostie = Math.round(salaireBrut * this.TAUX_OSTIE);
+    const cnaps = Math.round(salaireBrut * this.TAUX_CNAPS);
+    return salaireBrut - ostie - cnaps;
+  }
 
-    // Étape 1: Calcul du salaire imposable
-    let salaireImposable = salaireBrut - cnaps;
+  /**
+   * Calcule l'IRSA selon le barème progressif par tranches
+   * Méthode A: Calcul par tranches marginales
+   */
+  static calculerIRSA(revenuImposable: number): IRSACalculation {
+    const notes: string[] = [];
+    const tranches: DetailTranche[] = [];
+    let irsaTotal = 0;
 
-    // Application du minimum de perception
-    if (salaireImposable < this.BAREME_IRSA.minimumPerception) {
-      salaireImposable = this.BAREME_IRSA.minimumPerception;
-      console.log(`📌 Application du minimum de perception: ${this.BAREME_IRSA.minimumPerception.toLocaleString()} Ar`);
-    }
-
-    console.log(`💰 Salaire imposable final: ${salaireImposable.toLocaleString()} Ar`);
-
-    if (salaireImposable <= 0) {
+    if (revenuImposable <= 0) {
       return {
-        salaireImposable: 0,
+        revenuImposable: 0,
         tranches: [],
-        montantTotal: 0,
-        tauxEffectif: 0
+        irsaAvantMinimum: 0,
+        minimumPerception: this.MINIMUM_PERCEPTION,
+        irsaFinal: this.MINIMUM_PERCEPTION,
+        tauxEffectif: 0,
+        notes: ["Revenu imposable nul, application du minimum de perception"]
       };
     }
 
-    const tranches = [];
-    let montantTotal = 0;
-    let salaireRestant = salaireImposable;
+    notes.push(`Revenu imposable: ${revenuImposable.toLocaleString()} Ar`);
 
-    // Parcourir chaque tranche du barème
-    for (const tranche of this.BAREME_IRSA.tranches) {
-      if (salaireRestant <= 0) break;
+    for (const tranche of this.BAREME) {
+      if (revenuImposable <= tranche.min) {
+        continue;
+      }
 
-      const montantTranche = this.calculerMontantTranche(salaireImposable, tranche);
-      const impotTranche = Math.round(montantTranche * tranche.taux / 100);
+      const maxTranche = tranche.max || Infinity;
+      const montantDansTranche = Math.min(
+        revenuImposable - tranche.min,
+        maxTranche - tranche.min
+      );
 
-      if (montantTranche > 0) {
-        tranches.push({
-          min: tranche.min,
-          max: tranche.max || salaireImposable,
-          taux: tranche.taux,
-          montantTranche,
-          impotTranche
-        });
+      if (montantDansTranche <= 0) {
+        continue;
+      }
 
-        montantTotal += impotTranche;
-        salaireRestant -= montantTranche;
+      const impotTranche = Math.round((montantDansTranche * tranche.taux) / 100);
+      irsaTotal += impotTranche;
+
+      const maxDisplay = tranche.max || revenuImposable;
+      const formule = `(${Math.min(revenuImposable, maxDisplay).toLocaleString()} - ${tranche.min.toLocaleString()}) × ${tranche.taux}%`;
+
+      tranches.push({
+        min: tranche.min,
+        max: maxDisplay,
+        taux: tranche.taux,
+        montantDansTranche,
+        impotTranche,
+        formule
+      });
+
+      if (impotTranche > 0) {
+        notes.push(
+          `Tranche ${tranche.min.toLocaleString()} - ${maxDisplay.toLocaleString()}: ` +
+          `${montantDansTranche.toLocaleString()} Ar × ${tranche.taux}% = ${impotTranche.toLocaleString()} Ar`
+        );
       }
     }
 
-    const tauxEffectif = salaireImposable > 0 ? (montantTotal / salaireImposable) * 100 : 0;
+    const irsaAvantMinimum = irsaTotal;
+    notes.push(`IRSA calculé: ${irsaAvantMinimum.toLocaleString()} Ar`);
 
-    console.log(`✅ IRSA calculé: ${montantTotal.toLocaleString()} Ar (taux effectif: ${tauxEffectif.toFixed(2)}%)`);
+    let irsaFinal = irsaAvantMinimum;
+    if (irsaAvantMinimum < this.MINIMUM_PERCEPTION) {
+      irsaFinal = this.MINIMUM_PERCEPTION;
+      notes.push(
+        `⚠️ IRSA (${irsaAvantMinimum.toLocaleString()} Ar) < Minimum (${this.MINIMUM_PERCEPTION.toLocaleString()} Ar)`,
+        `→ Application du minimum de perception: ${this.MINIMUM_PERCEPTION.toLocaleString()} Ar`
+      );
+    }
+
+    const tauxEffectif = revenuImposable > 0 ? (irsaFinal / revenuImposable) * 100 : 0;
 
     return {
-      salaireImposable,
+      revenuImposable,
       tranches,
-      montantTotal: Math.round(montantTotal),
-      tauxEffectif: Math.round(tauxEffectif * 100) / 100
+      irsaAvantMinimum,
+      minimumPerception: this.MINIMUM_PERCEPTION,
+      irsaFinal,
+      tauxEffectif: Math.round(tauxEffectif * 100) / 100,
+      notes
     };
   }
 
   /**
-   * Calcule le montant imposable dans une tranche donnée
+   * Calcule le salaire complet avec toutes les déductions
+   * Processus complet conforme aux spécifications:
+   *
+   * ÉTAPE 1: Calcul des cotisations
+   *   - OSTIE = 2% du salaire brut
+   *   - CNaPS = 1% du salaire brut
+   *
+   * ÉTAPE 2: Calcul du revenu imposable
+   *   - RI = Salaire Brut - OSTIE - CNaPS
+   *   - RI = Salaire Brut × 0,97
+   *
+   * ÉTAPE 3: Calcul de l'IRSA par tranches progressives
+   *   - Application du barème officiel
+   *   - Minimum de perception: 3 000 Ar
+   *
+   * ÉTAPE 4: Calcul du salaire net
+   *   - Salaire Net = Salaire Brut - OSTIE - CNaPS - IRSA
    */
-  private static calculerMontantTranche(salaireImposable: number, tranche: any): number {
-    const minTranche = tranche.min;
-    const maxTranche = tranche.max;
-
-    // Le salaire n'atteint pas cette tranche
-    if (salaireImposable < minTranche) {
-      return 0;
+  static calculerSalaireComplet(salaireBrut: number): CalculSalaireComplet {
+    if (salaireBrut <= 0) {
+      return {
+        salaireBrut: 0,
+        ostie: 0,
+        cnaps: 0,
+        revenuImposable: 0,
+        irsa: 0,
+        irsaDetail: this.calculerIRSA(0),
+        totalDeductions: 0,
+        salaireNet: 0
+      };
     }
 
-    // Dernière tranche (illimitée)
-    if (maxTranche === null) {
-      return Math.max(0, salaireImposable - minTranche + 1);
-    }
-
-    // Le salaire dépasse cette tranche
-    if (salaireImposable > maxTranche) {
-      return maxTranche - minTranche + 1;
-    }
-
-    // Le salaire est dans cette tranche
-    return salaireImposable - minTranche + 1;
-  }
-
-  /**
-   * Obtient le barème IRSA actuel
-   */
-  static getBareme(): IRSABareme {
-    return this.BAREME_IRSA;
-  }
-
-  /**
-   * Formate l'affichage du calcul IRSA
-   */
-  static formaterCalcul(calculation: IRSACalculation): string {
-    let result = `Calcul IRSA détaillé:\n`;
-    result += `Salaire imposable: ${calculation.salaireImposable.toLocaleString()} MGA\n\n`;
-
-    calculation.tranches.forEach((tranche, index) => {
-      const maxDisplay = tranche.max === calculation.salaireImposable ? '∞' : tranche.max.toLocaleString();
-      result += `Tranche ${index + 1}: ${tranche.min.toLocaleString()} - ${maxDisplay} MGA (${tranche.taux}%)\n`;
-      result += `  Montant dans la tranche: ${tranche.montantTranche.toLocaleString()} MGA\n`;
-      result += `  Impôt: ${tranche.impotTranche.toLocaleString()} MGA\n\n`;
-    });
-
-    result += `IRSA Total: ${calculation.montantTotal.toLocaleString()} MGA\n`;
-    result += `Taux effectif: ${calculation.tauxEffectif}%`;
-
-    return result;
-  }
-
-  /**
-   * Valide si un montant est soumis à l'IRSA
-   */
-  static estSoumisIRSA(salaireImposable: number): boolean {
-    return salaireImposable > 350000; // Seuil d'exonération
-  }
-
-  /**
-   * Calcule le salaire complet avec toutes les cotisations et impôts
-   * Étape 1: OSTIE (2% du salaire brut)
-   * Étape 2: CNAPS (1% du salaire brut)
-   * Étape 3: Salaire imposable = Salaire Brut - CNAPS (avec minimum de perception)
-   * Étape 4: IRSA progressif
-   * @param salaireBrut Salaire de base
-   * @returns Calcul complet avec toutes les déductions
-   */
-  static calculerSalaireComplet(salaireBrut: number): {
-    salaireBrut: number;
-    ostie: number;
-    cnaps: number;
-    salaireImposable: number;
-    irsa: number;
-    irsaDetail: IRSACalculation;
-    totalDeductions: number;
-    salaireNet: number;
-  } {
-    console.log(`\n💼 === CALCUL COMPLET DU SALAIRE ===`);
-    console.log(`📊 Salaire de Base: ${salaireBrut.toLocaleString()} Ar`);
-
-    // ÉTAPE 1: Calcul OSTIE (2%)
-    const ostie = Math.round(salaireBrut * 0.02);
-    console.log(`\n🔵 OSTIE (2%): ${ostie.toLocaleString()} Ar`);
-
-    // ÉTAPE 2: Calcul CNAPS (1%)
-    const cnaps = Math.round(salaireBrut * 0.01);
-    console.log(`🔵 CNAPS (1%): ${cnaps.toLocaleString()} Ar`);
-
-    // ÉTAPE 3: Calcul du salaire imposable
-    let salaireImposableBase = salaireBrut - cnaps;
-    const salaireImposable = Math.max(salaireImposableBase, this.BAREME_IRSA.minimumPerception);
-    console.log(`\n💰 Salaire imposable: ${salaireImposable.toLocaleString()} Ar`);
-    if (salaireImposableBase < this.BAREME_IRSA.minimumPerception) {
-      console.log(`   (Minimum de perception appliqué: ${this.BAREME_IRSA.minimumPerception.toLocaleString()} Ar)`);
-    }
-
-    // ÉTAPE 4: Calcul IRSA progressif
-    const irsaDetail = this.calculerIRSA(salaireBrut, cnaps);
-    console.log(`\n🔴 IRSA: ${irsaDetail.montantTotal.toLocaleString()} Ar`);
-    console.log(`   Taux effectif: ${irsaDetail.tauxEffectif.toFixed(2)}%`);
-
-    // RÉSULTAT FINAL
-    const totalDeductions = ostie + cnaps + irsaDetail.montantTotal;
+    const ostie = Math.round(salaireBrut * this.TAUX_OSTIE);
+    const cnaps = Math.round(salaireBrut * this.TAUX_CNAPS);
+    const revenuImposable = salaireBrut - ostie - cnaps;
+    const irsaDetail = this.calculerIRSA(revenuImposable);
+    const irsa = irsaDetail.irsaFinal;
+    const totalDeductions = ostie + cnaps + irsa;
     const salaireNet = salaireBrut - totalDeductions;
-
-    console.log(`\n✅ === RÉSULTAT FINAL ===`);
-    console.log(`Total déductions: ${totalDeductions.toLocaleString()} Ar`);
-    console.log(`Salaire NET: ${salaireNet.toLocaleString()} Ar`);
-    console.log(`Taux de prélèvement: ${((totalDeductions / salaireBrut) * 100).toFixed(2)}%\n`);
 
     return {
       salaireBrut,
       ostie,
       cnaps,
-      salaireImposable,
-      irsa: irsaDetail.montantTotal,
+      revenuImposable,
+      irsa,
       irsaDetail,
       totalDeductions,
       salaireNet
     };
+  }
+
+  /**
+   * Obtient le barème IRSA officiel
+   */
+  static getBareme(): TrancheFiscale[] {
+    return [...this.BAREME];
+  }
+
+  /**
+   * Obtient le minimum de perception
+   */
+  static getMinimumPerception(): number {
+    return this.MINIMUM_PERCEPTION;
+  }
+
+  /**
+   * Valide un exemple de calcul (pour tests)
+   * Exemple du cahier des charges: Salaire brut 1 800 000 Ar
+   */
+  static validerExemple(): {
+    salaireBrut: number;
+    ostie: number;
+    cnaps: number;
+    revenuImposable: number;
+    detailTranches: string[];
+    irsaTotal: number;
+    salaireNet: number;
+    conforme: boolean;
+  } {
+    const salaireBrut = 1800000;
+    const resultat = this.calculerSalaireComplet(salaireBrut);
+
+    const detailTranches = [
+      `Tranche 1 (0 - 350 000): 0 Ar`,
+      `Tranche 2 (350 001 - 400 000): (400 000 - 350 000) × 5% = 2 500 Ar`,
+      `Tranche 3 (400 001 - 500 000): (500 000 - 400 000) × 10% = 10 000 Ar`,
+      `Tranche 4 (500 001 - 600 000): (600 000 - 500 000) × 15% = 15 000 Ar`,
+      `Tranche 5 (600 001+): (1 746 000 - 600 000) × 20% = 229 200 Ar`
+    ];
+
+    const attendu = {
+      ostie: 36000,
+      cnaps: 18000,
+      revenuImposable: 1746000,
+      irsa: 256700,
+      salaireNet: 1489300
+    };
+
+    const conforme =
+      resultat.ostie === attendu.ostie &&
+      resultat.cnaps === attendu.cnaps &&
+      resultat.revenuImposable === attendu.revenuImposable &&
+      resultat.irsa === attendu.irsa &&
+      resultat.salaireNet === attendu.salaireNet;
+
+    return {
+      salaireBrut,
+      ostie: resultat.ostie,
+      cnaps: resultat.cnaps,
+      revenuImposable: resultat.revenuImposable,
+      detailTranches,
+      irsaTotal: resultat.irsa,
+      salaireNet: resultat.salaireNet,
+      conforme
+    };
+  }
+
+  /**
+   * Formule simplifiée par palier (Méthode B)
+   * Pour vérification et calculs rapides
+   */
+  static calculerIRSAFormuleSimplifiee(revenuImposable: number): number {
+    if (revenuImposable <= 350000) {
+      return 0;
+    } else if (revenuImposable <= 400000) {
+      return Math.round((revenuImposable - 350000) * 0.05);
+    } else if (revenuImposable <= 500000) {
+      return Math.round(2500 + (revenuImposable - 400000) * 0.10);
+    } else if (revenuImposable <= 600000) {
+      return Math.round(12500 + (revenuImposable - 500000) * 0.15);
+    } else {
+      return Math.round(27500 + (revenuImposable - 600000) * 0.20);
+    }
+  }
+
+  /**
+   * Formate le calcul pour affichage ou export
+   */
+  static formaterCalcul(calcul: CalculSalaireComplet): string {
+    let output = "═══════════════════════════════════════════════════\n";
+    output += "   BULLETIN DE CALCUL DE SALAIRE - MADAGASCAR\n";
+    output += "═══════════════════════════════════════════════════\n\n";
+
+    output += "SALAIRE BRUT\n";
+    output += `  ${calcul.salaireBrut.toLocaleString()} Ar\n\n`;
+
+    output += "DÉDUCTIONS OBLIGATOIRES\n";
+    output += `  OSTIE (2%)      -${calcul.ostie.toLocaleString()} Ar\n`;
+    output += `  CNaPS (1%)      -${calcul.cnaps.toLocaleString()} Ar\n`;
+    output += `                  ─────────────────\n`;
+    output += `  Revenu imposable: ${calcul.revenuImposable.toLocaleString()} Ar\n\n`;
+
+    output += "CALCUL IRSA (Barème progressif)\n";
+    calcul.irsaDetail.tranches.forEach((tranche, index) => {
+      if (tranche.impotTranche > 0) {
+        output += `  Tranche ${index + 1}: ${tranche.formule} = ${tranche.impotTranche.toLocaleString()} Ar\n`;
+      }
+    });
+    output += `                  ─────────────────\n`;
+    output += `  IRSA calculé    -${calcul.irsaDetail.irsaAvantMinimum.toLocaleString()} Ar\n`;
+
+    if (calcul.irsaDetail.irsaFinal > calcul.irsaDetail.irsaAvantMinimum) {
+      output += `  Minimum appliqué -${calcul.irsaDetail.irsaFinal.toLocaleString()} Ar\n`;
+    }
+
+    output += `\n`;
+    output += `TOTAL DÉDUCTIONS  -${calcul.totalDeductions.toLocaleString()} Ar\n\n`;
+    output += "═══════════════════════════════════════════════════\n";
+    output += `SALAIRE NET À PAYER: ${calcul.salaireNet.toLocaleString()} Ar\n`;
+    output += "═══════════════════════════════════════════════════\n";
+
+    return output;
   }
 }
