@@ -798,11 +798,12 @@ export function HumanResources() {
                 <div className="bg-white rounded p-2">
                   <p className="text-xs text-gray-600 mb-2">Tranches fiscales malgaches en vigueur:</p>
                   <div className="text-xs text-gray-700 space-y-1 mb-2">
-                    <p>• 0 - 150 000 Ar: 0% (Exonéré)</p>
-                    <p>• 150 001 - 250 000 Ar: 5%</p>
-                    <p>• 250 001 - 400 000 Ar: 10%</p>
-                    <p>• 400 001 - 600 000 Ar: 15%</p>
-                    <p>• Au-delà de 600 000 Ar: 20%</p>
+                    <p>• 0 - 350 000 Ar: 0% (Exonéré)</p>
+                    <p>• 350 001 - 400 000 Ar: 5%</p>
+                    <p>• 400 001 - 500 000 Ar: 10%</p>
+                    <p>• 500 001 - 600 000 Ar: 15%</p>
+                    <p>• 600 001 - 650 000 Ar: 20%</p>
+                    <p>• Au-delà de 650 000 Ar: 20%</p>
                   </div>
 
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200">
@@ -814,24 +815,28 @@ export function HumanResources() {
                         const calculated = salaireBrut - cnaps;
                         const salaireImposable = Math.max(calculated, 3000);
 
-                        // Calcul IRSA selon tranches
+                        // Calcul IRSA selon tranches progressives officielles
                         let irsa = 0;
-                        if (salaireImposable > 150000) {
-                          // Tranche 2: 150 001 - 250 000 (5%)
-                          if (salaireImposable <= 250000) {
-                            irsa = Math.round((salaireImposable - 150000) * 0.05);
+                        if (salaireImposable > 350000) {
+                          // Tranche 2: 350 001 - 400 000 (5%)
+                          if (salaireImposable <= 400000) {
+                            irsa = Math.round((salaireImposable - 350000) * 0.05);
                           }
-                          // Tranche 3: 250 001 - 400 000 (10%)
-                          else if (salaireImposable <= 400000) {
-                            irsa = Math.round((100000 * 0.05) + ((salaireImposable - 250000) * 0.10));
+                          // Tranche 3: 400 001 - 500 000 (10%)
+                          else if (salaireImposable <= 500000) {
+                            irsa = Math.round((50000 * 0.05) + ((salaireImposable - 400000) * 0.10));
                           }
-                          // Tranche 4: 400 001 - 600 000 (15%)
+                          // Tranche 4: 500 001 - 600 000 (15%)
                           else if (salaireImposable <= 600000) {
-                            irsa = Math.round((100000 * 0.05) + (150000 * 0.10) + ((salaireImposable - 400000) * 0.15));
+                            irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + ((salaireImposable - 500000) * 0.15));
                           }
-                          // Tranche 5: Au-delà de 600 000 (20%)
+                          // Tranche 5: 600 001 - 650 000 (20%)
+                          else if (salaireImposable <= 650000) {
+                            irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + (100000 * 0.15) + ((salaireImposable - 600000) * 0.20));
+                          }
+                          // Au-delà de 650 000 (20%)
                           else {
-                            irsa = Math.round((100000 * 0.05) + (150000 * 0.10) + (200000 * 0.15) + ((salaireImposable - 600000) * 0.20));
+                            irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + (100000 * 0.15) + (50000 * 0.20) + ((salaireImposable - 650000) * 0.20));
                           }
                         }
                         return irsa.toLocaleString();
@@ -854,15 +859,17 @@ export function HumanResources() {
                           const salaireImposable = Math.max(calculated, 3000);
 
                           let irsa = 0;
-                          if (salaireImposable > 150000) {
-                            if (salaireImposable <= 250000) {
-                              irsa = Math.round((salaireImposable - 150000) * 0.05);
-                            } else if (salaireImposable <= 400000) {
-                              irsa = Math.round((100000 * 0.05) + ((salaireImposable - 250000) * 0.10));
+                          if (salaireImposable > 350000) {
+                            if (salaireImposable <= 400000) {
+                              irsa = Math.round((salaireImposable - 350000) * 0.05);
+                            } else if (salaireImposable <= 500000) {
+                              irsa = Math.round((50000 * 0.05) + ((salaireImposable - 400000) * 0.10));
                             } else if (salaireImposable <= 600000) {
-                              irsa = Math.round((100000 * 0.05) + (150000 * 0.10) + ((salaireImposable - 400000) * 0.15));
+                              irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + ((salaireImposable - 500000) * 0.15));
+                            } else if (salaireImposable <= 650000) {
+                              irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + (100000 * 0.15) + ((salaireImposable - 600000) * 0.20));
                             } else {
-                              irsa = Math.round((100000 * 0.05) + (150000 * 0.10) + (200000 * 0.15) + ((salaireImposable - 600000) * 0.20));
+                              irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + (100000 * 0.15) + (50000 * 0.20) + ((salaireImposable - 650000) * 0.20));
                             }
                           }
 

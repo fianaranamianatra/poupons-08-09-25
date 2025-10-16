@@ -27,14 +27,15 @@ export interface IRSABareme {
 }
 
 export class IRSAService {
-  // Barème IRSA Madagascar - Tranches progressives
+  // Barème IRSA Madagascar - Tranches progressives (Officiel)
   private static readonly BAREME_IRSA: IRSABareme = {
     tranches: [
-      { min: 0, max: 150000, taux: 0, description: "Exonéré" },
-      { min: 150001, max: 250000, taux: 5, description: "5%" },
-      { min: 250001, max: 400000, taux: 10, description: "10%" },
-      { min: 400001, max: 600000, taux: 15, description: "15%" },
-      { min: 600001, max: null, taux: 20, description: "20%" }
+      { min: 0, max: 350000, taux: 0, description: "Exonéré" },
+      { min: 350001, max: 400000, taux: 5, description: "5%" },
+      { min: 400001, max: 500000, taux: 10, description: "10%" },
+      { min: 500001, max: 600000, taux: 15, description: "15%" },
+      { min: 600001, max: 650000, taux: 20, description: "20%" },
+      { min: 650001, max: null, taux: 20, description: "20%" }
     ],
     abattementBase: 0,
     minimumPerception: 3000, // Minimum de perception IRSA
@@ -165,7 +166,7 @@ export class IRSAService {
    * Valide si un montant est soumis à l'IRSA
    */
   static estSoumisIRSA(salaireImposable: number): boolean {
-    return salaireImposable > 150000; // Seuil d'exonération
+    return salaireImposable > 350000; // Seuil d'exonération
   }
 
   /**
