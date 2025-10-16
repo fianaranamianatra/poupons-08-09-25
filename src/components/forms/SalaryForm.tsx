@@ -93,12 +93,12 @@ export function SalaryForm({ onSubmit, onCancel, initialData, employees = [], te
 
     const totalGross = baseSalary + transportAllowance + housingAllowance + mealAllowance + performanceAllowance + otherAllowance;
     const cnaps = Math.round(totalGross * 0.01); // 1% employee contribution
-    const ostie = Math.round(totalGross * 0.01); // 1% employee contribution
+    const ostie = Math.round(totalGross * 0.02); // 2% employee contribution (OSTIE)
     const taxableIncome = totalGross - cnaps - ostie;
 
     // Calculate IRSA using the service
-    const irsaCalculation = IRSAService.calculerIRSA(totalGross, cnaps);
-    const irsa = irsaCalculation.montantTotal;
+    const irsaCalculation = IRSAService.calculerIRSA(taxableIncome);
+    const irsa = irsaCalculation.irsaFinal;
     
     const totalDeductions = cnaps + ostie + irsa;
     const netSalary = totalGross - totalDeductions;

@@ -146,14 +146,14 @@ export function SalaryCalculationForm({
 
       // ÉTAPE 4: Application de l'IRSA progressif
       console.log(`\n📊 Application du barème IRSA progressif...`);
-      const irsaCalculation = IRSAService.calculerIRSA(grossSalary, cnaps);
-      const irsa = irsaCalculation.montantTotal;
+      const irsaCalculation = IRSAService.calculerIRSA(taxableIncome);
+      const irsa = irsaCalculation.irsaFinal;
 
       console.log(`\n🔴 IRSA calculé: ${irsa.toLocaleString()} Ar`);
       console.log(`   Taux effectif: ${irsaCalculation.tauxEffectif.toFixed(2)}%`);
       console.log(`   Détail des tranches:`);
       irsaCalculation.tranches.forEach((t, i) => {
-        console.log(`   - Tranche ${i + 1}: ${t.montantTranche.toLocaleString()} Ar × ${t.taux}% = ${t.impotTranche.toLocaleString()} Ar`);
+        console.log(`   - Tranche ${i + 1}: ${t.montantDansTranche.toLocaleString()} Ar × ${t.taux}% = ${t.impotTranche.toLocaleString()} Ar`);
       });
 
       // RÉSULTAT FINAL
