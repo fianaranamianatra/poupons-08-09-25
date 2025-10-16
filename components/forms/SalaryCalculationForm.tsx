@@ -134,7 +134,7 @@ export function SalaryCalculationForm({
       const taxableIncome = grossSalary - cnaps; // Base imposable = Salaire brut - CNAPS salariale
 
       // Calcul IRSA avec le service dédié
-      const irsaCalculation = IRSAService.calculerIRSA(taxableIncome);
+      const irsaCalculation = IRSAService.calculerIRSA(grossSalary, cnaps);
       const irsa = irsaCalculation.montantTotal;
 
       const totalDeductions = cnaps + irsa;

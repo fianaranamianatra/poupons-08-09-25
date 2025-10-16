@@ -189,7 +189,7 @@ export function EmployeeForm({ onSubmit, onCancel, initialData }: EmployeeFormPr
     const cnaps = Math.round(salary * 0.01); // 1% salarié
     const ostie = Math.round(salary * 0.01); // 1% salarié
     const salaireImposable = salary - cnaps - ostie;
-    const irsaCalculation = IRSAService.calculerIRSA(salaireImposable);
+    const irsaCalculation = IRSAService.calculerIRSA(salary, cnaps);
     const salaireNet = salaireImposable - irsaCalculation.montantTotal;
     
     setCalculatedValues({
