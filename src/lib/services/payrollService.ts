@@ -67,7 +67,7 @@ export class PayrollService {
     }
 
     // Calcul de l'IRSA
-    const irsaCalculation = IRSAService.calculerIRSA(salaireImposable);
+    const irsaCalculation = IRSAService.calculerIRSA(grossSalary, cnapsEmployeeContribution);
     console.log(`💰 IRSA calculé: ${irsaCalculation.montantTotal.toLocaleString()} MGA`);
 
     const totalEmployeeContributions = cnapsEmployeeContribution + ostieEmployeeContribution + irsaCalculation.montantTotal;
