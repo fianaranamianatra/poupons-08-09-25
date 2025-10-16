@@ -556,7 +556,10 @@ export function PayrollManagement() {
                   // Estimation IRSA
                   const cnapsEstime = financialSettings ?
                     Math.round(employee.salary * financialSettings.cnaps.employeeRate / 100) : 0;
-                  const irsaEstime = IRSAService.calculerIRSA(employee.salary, cnapsEstime).montantTotal;
+                  const ostieEstime = financialSettings ?
+                    Math.round(employee.salary * financialSettings.ostie.employeeRate / 100) : 0;
+                  const revenuImposable = employee.salary - cnapsEstime - ostieEstime;
+                  const irsaEstime = IRSAService.calculerIRSA(revenuImposable).irsaFinal;
                   const totalDeductions = estimatedContributions + irsaEstime;
                   const estimatedNetSalary = employee.salary - totalDeductions;
                   

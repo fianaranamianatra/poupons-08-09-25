@@ -59,20 +59,17 @@ export class PayrollService {
     // OSTIE : 2% du salaire brut (part salariale)
     const ostieEmployeeContribution = Math.round(grossSalary * ostieRate / 100);
 
-    // Calcul du salaire imposable (Salaire brut - CNAPS salariale)
-    // Avec minimum de perception de 3 000 Ar
-    let salaireImposable = grossSalary - cnapsEmployeeContribution;
-    if (salaireImposable < 3000) {
-      salaireImposable = 3000;
-    }
+    // Calcul du salaire imposable (Salaire brut - CNAPS salariale - OSTIE salariale)
+    // Conformément au calcul standard Madagascar: RI = Salaire Brut - OSTIE - CNAPS
+    const salaireImposable = grossSalary - cnapsEmployeeContribution - ostieEmployeeContribution;
 
-    // Calcul de l'IRSA
-    const irsaCalculation = IRSAService.calculerIRSA(grossSalary, cnapsEmployeeContribution);
-    console.log(`💰 IRSA calculé: ${irsaCalculation.montantTotal.toLocaleString()} MGA`);
+    // Calcul de l'IRSA avec le revenu imposable
+    const irsaCalculation = IRSAService.calculerIRSA(salaireImposable);
+    console.log(`💰 IRSA calculé: ${irsaCalculation.irsaFinal.toLocaleString()} MGA`);
 
-    const totalEmployeeContributions = cnapsEmployeeContribution + ostieEmployeeContribution + irsaCalculation.montantTotal;
+    const totalEmployeeContributions = cnapsEmployeeContribution + ostieEmployeeContribution + irsaCalculation.irsaFinal;
     const totalEmployerContributions = cnapsEmployerContribution;
-    const netSalary = grossSalary - cnapsEmployeeContribution - ostieEmployeeContribution - irsaCalculation.montantTotal;
+    const netSalary = grossSalary - cnapsEmployeeContribution - ostieEmployeeContribution - irsaCalculation.irsaFinal;
     const totalEmployerCost = grossSalary + totalEmployerContributions;
 
     return {
@@ -101,7 +98,7 @@ export class PayrollService {
         isActive: true,
         salaireImposable,
         calculation: irsaCalculation,
-        montant: irsaCalculation.montantTotal
+        montant: irsaCalculation.irsaFinal
       },
       salaireImposable,
       totalEmployeeContributions,
