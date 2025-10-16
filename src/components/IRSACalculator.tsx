@@ -13,7 +13,9 @@ export function IRSACalculator({ salaireImposable, onCalculationChange }: IRSACa
 
   React.useEffect(() => {
     if (salaireImposable > 0) {
-      const calc = IRSAService.calculerIRSA(salaireImposable);
+      // Estimer CNAPS à 1% pour le calcul
+      const cnapsEstime = Math.round(salaireImposable * 0.01);
+      const calc = IRSAService.calculerIRSA(salaireImposable, cnapsEstime);
       setCalculation(calc);
       onCalculationChange?.(calc);
     }
