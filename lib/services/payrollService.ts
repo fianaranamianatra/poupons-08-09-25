@@ -57,12 +57,12 @@ export class PayrollService {
     const cnapsEmployerContribution = Math.round(grossSalary * cnapsEmployeurRate / 100);
     const ostieEmployeeContribution = Math.round(grossSalary * ostieSalarieRate / 100);
     const ostieEmployerContribution = Math.round(grossSalary * ostieEmployeurRate / 100);
-    
+
     // Calcul du salaire imposable (après CNAPS et OSTIE salarié)
     const salaireImposable = grossSalary - cnapsEmployeeContribution - ostieEmployeeContribution;
-    
+
     // Calcul de l'IRSA
-    const irsaCalculation = IRSAService.calculerIRSA(salaireImposable);
+    const irsaCalculation = IRSAService.calculerIRSA(grossSalary, cnapsEmployeeContribution);
     console.log(`💰 IRSA calculé: ${irsaCalculation.montantTotal.toLocaleString()} MGA`);
     
     const totalEmployeeContributions = cnapsEmployeeContribution + ostieEmployeeContribution + irsaCalculation.montantTotal;
