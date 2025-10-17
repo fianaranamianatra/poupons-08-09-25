@@ -129,20 +129,12 @@ export function SalaryCalculationForm({
       const cnaps = Math.round(grossSalary * 0.01);
       console.log(`🔵 CNAPS (1%): ${cnaps.toLocaleString()} Ar`);
 
-      // ÉTAPE 3: Calcul du salaire imposable
-      // Formule: Salaire imposable = Salaire Brut - CNAPS
-      // Avec minimum de perception de 3 000 Ar
-      const salaireImposableBase = grossSalary - cnaps;
-      const minimumPerception = 3000;
-      const taxableIncome = Math.max(salaireImposableBase, minimumPerception);
+      // ÉTAPE 3: Calcul du revenu imposable
+      // Formule: Revenu Imposable = Salaire Brut - CNAPS - OSTIE
+      // RI = Salaire Brut × 0,97
+      const taxableIncome = grossSalary - cnaps - ostie;
 
-      console.log(`\n📊 Salaire imposable = ${grossSalary.toLocaleString()} - ${cnaps.toLocaleString()} = ${salaireImposableBase.toLocaleString()} Ar`);
-      if (salaireImposableBase < minimumPerception) {
-        console.log(`⚠️  Application du minimum de perception: ${minimumPerception.toLocaleString()} Ar`);
-        console.log(`💰 Salaire imposable final: ${taxableIncome.toLocaleString()} Ar`);
-      } else {
-        console.log(`✅ Salaire imposable: ${taxableIncome.toLocaleString()} Ar (> ${minimumPerception.toLocaleString()} Ar)`);
-      }
+      console.log(`\n📊 Revenu imposable = ${grossSalary.toLocaleString()} - ${cnaps.toLocaleString()} - ${ostie.toLocaleString()} = ${taxableIncome.toLocaleString()} Ar`);
 
       // ÉTAPE 4: Application de l'IRSA progressif
       console.log(`\n📊 Application du barème IRSA progressif...`);
