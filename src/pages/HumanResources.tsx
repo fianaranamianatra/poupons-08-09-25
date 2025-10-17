@@ -5,6 +5,7 @@ import EmployeeForm from '../components/forms/EmployeeForm';
 import { useFirebaseCollection } from '../hooks/useFirebaseCollection';
 import { hierarchyService } from '../lib/firebase/firebaseService';
 import { Avatar } from '../components/Avatar';
+import { IRSAService } from '../lib/services/irsaService';
 
 interface Employee {
   id: string;
@@ -749,42 +750,41 @@ export function HumanResources() {
 
                 {/* ÉTAPE 2: Salaire Imposable */}
                 <div className="border-t border-gray-300 pt-2">
-                  <p className="text-xs font-bold text-gray-800 mb-2 bg-purple-100 px-2 py-1 rounded">ÉTAPE 2: Calcul du salaire imposable (IRSA)</p>
+                  <p className="text-xs font-bold text-gray-800 mb-2 bg-purple-100 px-2 py-1 rounded">ÉTAPE 2: Calcul du revenu imposable</p>
                 </div>
 
                 <div className="bg-white rounded p-2 space-y-1">
                   <div className="text-xs text-gray-600 space-y-1">
-                    <p className="font-medium">Formule: Salaire imposable = Salaire Brut - CNAPS</p>
-                    <p className="italic">Avec minimum de perception de 3 000 Ar</p>
+                    <p className="font-medium">Formule: Revenu Imposable = Salaire Brut - OSTIE - CNAPS</p>
+                    <p className="italic">RI = Salaire Brut × 0,97</p>
                   </div>
                   <div className="mt-2 space-y-1">
-                    <p className="text-xs text-gray-600">
-                      = {selectedEmployee.salary.toLocaleString()} - {Math.round(selectedEmployee.salary * 0.01).toLocaleString()}
-                      = {(selectedEmployee.salary - Math.round(selectedEmployee.salary * 0.01)).toLocaleString()} Ar
-                    </p>
                     {(() => {
-                      const calculated = selectedEmployee.salary - Math.round(selectedEmployee.salary * 0.01);
-                      if (calculated < 3000) {
-                        return (
-                          <p className="text-xs text-orange-600 font-medium">
-                            ⚠️ {calculated.toLocaleString()} Ar &lt; 3 000 Ar → Salaire imposable = 3 000 Ar
+                      const salaireBrut = selectedEmployee.salary;
+                      const ostie = Math.round(salaireBrut * 0.02);
+                      const cnaps = Math.round(salaireBrut * 0.01);
+                      const revenuImposable = salaireBrut - ostie - cnaps;
+
+                      return (
+                        <>
+                          <p className="text-xs text-gray-600">
+                            = {salaireBrut.toLocaleString()} - {ostie.toLocaleString()} - {cnaps.toLocaleString()}
                           </p>
-                        );
-                      } else {
-                        return (
-                          <p className="text-xs text-green-600 font-medium">
-                            ✓ {calculated.toLocaleString()} Ar &gt; 3 000 Ar → Salaire imposable = {calculated.toLocaleString()} Ar
+                          <p className="text-xs text-gray-600">
+                            = {revenuImposable.toLocaleString()} Ar
                           </p>
-                        );
-                      }
+                        </>
+                      );
                     })()}
                   </div>
                   <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
-                    <span className="text-sm font-bold text-purple-700">Salaire imposable:</span>
+                    <span className="text-sm font-bold text-purple-700">Revenu imposable:</span>
                     <span className="text-sm font-bold text-purple-700">
                       {(() => {
-                        const calculated = selectedEmployee.salary - Math.round(selectedEmployee.salary * 0.01);
-                        return Math.max(calculated, 3000).toLocaleString();
+                        const salaireBrut = selectedEmployee.salary;
+                        const ostie = Math.round(salaireBrut * 0.02);
+                        const cnaps = Math.round(salaireBrut * 0.01);
+                        return (salaireBrut - ostie - cnaps).toLocaleString();
                       })()} Ar
                     </span>
                   </div>
@@ -796,53 +796,53 @@ export function HumanResources() {
                 </div>
 
                 <div className="bg-white rounded p-2">
-                  <p className="text-xs text-gray-600 mb-2">Tranches fiscales malgaches en vigueur:</p>
+                  <p className="text-xs text-gray-600 mb-2">Barème officiel Madagascar:</p>
                   <div className="text-xs text-gray-700 space-y-1 mb-2">
                     <p>• 0 - 350 000 Ar: 0% (Exonéré)</p>
                     <p>• 350 001 - 400 000 Ar: 5%</p>
                     <p>• 400 001 - 500 000 Ar: 10%</p>
                     <p>• 500 001 - 600 000 Ar: 15%</p>
-                    <p>• 600 001 - 650 000 Ar: 20%</p>
-                    <p>• Au-delà de 650 000 Ar: 20%</p>
+                    <p>• Au-delà de 600 000 Ar: 20%</p>
                   </div>
 
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                    <span className="text-sm font-medium text-gray-700">IRSA calculé:</span>
-                    <span className="text-sm font-bold text-red-600">
-                      -{(() => {
-                        const salaireBrut = selectedEmployee.salary;
-                        const cnaps = Math.round(salaireBrut * 0.01);
-                        const calculated = salaireBrut - cnaps;
-                        const salaireImposable = Math.max(calculated, 3000);
+                  {(() => {
+                    const salaireBrut = selectedEmployee.salary;
+                    const ostie = Math.round(salaireBrut * 0.02);
+                    const cnaps = Math.round(salaireBrut * 0.01);
+                    const revenuImposable = salaireBrut - ostie - cnaps;
+                    const irsaCalculation = IRSAService.calculerIRSA(revenuImposable);
 
-                        // Calcul IRSA selon tranches progressives officielles
-                        let irsa = 0;
-                        if (salaireImposable > 350000) {
-                          // Tranche 2: 350 001 - 400 000 (5%)
-                          if (salaireImposable <= 400000) {
-                            irsa = Math.round((salaireImposable - 350000) * 0.05);
-                          }
-                          // Tranche 3: 400 001 - 500 000 (10%)
-                          else if (salaireImposable <= 500000) {
-                            irsa = Math.round((50000 * 0.05) + ((salaireImposable - 400000) * 0.10));
-                          }
-                          // Tranche 4: 500 001 - 600 000 (15%)
-                          else if (salaireImposable <= 600000) {
-                            irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + ((salaireImposable - 500000) * 0.15));
-                          }
-                          // Tranche 5: 600 001 - 650 000 (20%)
-                          else if (salaireImposable <= 650000) {
-                            irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + (100000 * 0.15) + ((salaireImposable - 600000) * 0.20));
-                          }
-                          // Au-delà de 650 000 (20%)
-                          else {
-                            irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + (100000 * 0.15) + (50000 * 0.20) + ((salaireImposable - 650000) * 0.20));
-                          }
-                        }
-                        return irsa.toLocaleString();
-                      })()} Ar
-                    </span>
-                  </div>
+                    return (
+                      <>
+                        <div className="text-xs text-gray-600 space-y-1 mb-2 bg-gray-50 p-2 rounded">
+                          <p className="font-semibold text-gray-700 mb-1">Détail par tranche:</p>
+                          {irsaCalculation.tranches.map((tranche, index) => (
+                            tranche.impotTranche > 0 && (
+                              <p key={index} className="pl-2">
+                                • Tranche {index + 1} ({tranche.min.toLocaleString()} - {tranche.max.toLocaleString()}):
+                                <span className="font-medium ml-1">{tranche.impotTranche.toLocaleString()} Ar</span>
+                              </p>
+                            )
+                          ))}
+                        </div>
+
+                        {irsaCalculation.irsaFinal !== irsaCalculation.irsaAvantMinimum && (
+                          <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded mb-2">
+                            <p className="font-medium">⚠️ Minimum de perception appliqué</p>
+                            <p>IRSA calculé: {irsaCalculation.irsaAvantMinimum.toLocaleString()} Ar</p>
+                            <p>Minimum requis: {irsaCalculation.minimumPerception.toLocaleString()} Ar</p>
+                          </div>
+                        )}
+
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                          <span className="text-sm font-medium text-gray-700">IRSA total:</span>
+                          <span className="text-sm font-bold text-red-600">
+                            -{irsaCalculation.irsaFinal.toLocaleString()} Ar
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* RÉSULTAT FINAL */}
@@ -855,31 +855,16 @@ export function HumanResources() {
                           const salaireBrut = selectedEmployee.salary;
                           const ostie = Math.round(salaireBrut * 0.02);
                           const cnaps = Math.round(salaireBrut * 0.01);
-                          const calculated = salaireBrut - cnaps;
-                          const salaireImposable = Math.max(calculated, 3000);
-
-                          let irsa = 0;
-                          if (salaireImposable > 350000) {
-                            if (salaireImposable <= 400000) {
-                              irsa = Math.round((salaireImposable - 350000) * 0.05);
-                            } else if (salaireImposable <= 500000) {
-                              irsa = Math.round((50000 * 0.05) + ((salaireImposable - 400000) * 0.10));
-                            } else if (salaireImposable <= 600000) {
-                              irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + ((salaireImposable - 500000) * 0.15));
-                            } else if (salaireImposable <= 650000) {
-                              irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + (100000 * 0.15) + ((salaireImposable - 600000) * 0.20));
-                            } else {
-                              irsa = Math.round((50000 * 0.05) + (100000 * 0.10) + (100000 * 0.15) + (50000 * 0.20) + ((salaireImposable - 650000) * 0.20));
-                            }
-                          }
-
+                          const revenuImposable = salaireBrut - ostie - cnaps;
+                          const irsaCalculation = IRSAService.calculerIRSA(revenuImposable);
+                          const irsa = irsaCalculation.irsaFinal;
                           const salaireNet = salaireBrut - ostie - cnaps - irsa;
                           return salaireNet.toLocaleString();
                         })()} Ar
                       </span>
                     </div>
                     <div className="text-xs text-green-700 mt-1">
-                      = Salaire Base - OSTIE - CNAPS - IRSA
+                      = Salaire Brut - OSTIE - CNAPS - IRSA
                     </div>
                   </div>
                 </div>
